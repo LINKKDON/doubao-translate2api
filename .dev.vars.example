@@ -2,3 +2,8 @@
 API_KEY=
 # Paste your own Cookie Header containing sessionid, sid_tt and uid_tt.
 DOUBAO_COOKIE=
+
+# Optional variables (defaults shown). See README for details.
+# DOUBAO_DEFAULT_TARGET_LANG=zh
+# DOUBAO_DEFAULT_SCENE=2
+# DOUBAO_MAX_CONCURRENCY=4

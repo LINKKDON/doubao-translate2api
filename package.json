@@ -1,6 +1,6 @@
 {
   "name": "doubao-translate2api-lite",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -13,7 +13,10 @@
   "cloudflare": {
     "bindings": {
       "API_KEY": { "description": "生成至少 16 位、不含空格的随机访问密钥，沉浸式翻译中也填写同一个 Key。" },
-      "DOUBAO_COOKIE": { "description": "填写本人豆包账号的 Cookie Header，包含 sessionid、sid_tt 和 uid_tt；不要填写 JSON 文件。" }
+      "DOUBAO_COOKIE": { "description": "填写本人豆包账号的 Cookie Header，包含 sessionid、sid_tt 和 uid_tt；不要填写 JSON 文件。" },
+      "DOUBAO_DEFAULT_TARGET_LANG": { "description": "可选。请求未指定目标语言时的兜底值，默认 zh。" },
+      "DOUBAO_DEFAULT_SCENE": { "description": "可选。传给豆包上游的 scene 参数，1-6，默认 2。可用 x-doubao-scene 请求头逐请求覆盖。" },
+      "DOUBAO_MAX_CONCURRENCY": { "description": "可选。同一请求内批次的并发度，1-4，默认 4。设为 1 即等价于旧版串行行为。" }
     }
   },
   "devDependencies": { "wrangler": "4.148.0" },
