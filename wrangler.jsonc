@@ -10,6 +10,6 @@
   "vars": {
     "DOUBAO_DEFAULT_TARGET_LANG": "zh",
     "DOUBAO_DEFAULT_SCENE": "2",
-    "DOUBAO_MAX_CONCURRENCY": "4"
+    "DOUBAO_MAX_CONCURRENCY": "3"
   }
 }
