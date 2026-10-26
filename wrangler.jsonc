@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "doubao-translate2api-lite",
+  "name": "doubao-translate2api",
   "main": "worker.js",
   "build": { "command": "npm run build", "watch_dir": ["worker.js", "check-size.mjs", "test-hardening.mjs"] },
   "compatibility_date": "2026-10-06",

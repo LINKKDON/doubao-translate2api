@@ -30,6 +30,7 @@
 ### 命名
 
 - 去掉 `lite` 品牌：`/health` 的 `runtime` 返回值改为 `cloudflare-workers`；`stream: true` 与内部错误兜底的提示文案不再包含 Lite 字样。
+- `wrangler.jsonc`、`package.json`、`package-lock.json` 的名称统一为 `doubao-translate2api`，与 Cloudflare 上的 Worker 服务名保持一致。
 
 ## v0.2.0
 
