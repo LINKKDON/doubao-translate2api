@@ -378,7 +378,6 @@ capturedRawText = undefined;
 globalThis.fetch = async (_url, init) => {
   const body = JSON.parse(init.body);
   capturedRawText = body.raw_text;
-  preservedRawText = body.raw_text;
   return upstream(
     body.raw_text.map((text, index) => ({
       index,
@@ -407,7 +406,6 @@ capturedRawText = undefined;
 globalThis.fetch = async (_url, init) => {
   const body = JSON.parse(init.body);
   capturedRawText = body.raw_text;
-  preservedRawText = body.raw_text;
   return upstream(
     body.raw_text.map((text, index) => ({
       index,
