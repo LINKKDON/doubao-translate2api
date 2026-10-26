@@ -135,6 +135,8 @@ npx wrangler secret put DOUBAO_COOKIE
 4. `system` / `developer` 消息中的有效语言猜测（多个且冲突时返回 `400 invalid_request`）
 5. 环境变量 `DOUBAO_DEFAULT_TARGET_LANG`
 
+开头指令的冒号可以省略。若第一行匹配 `Translate to <语言>` 或 `翻译成<语言>`，Worker 会把整行当作指令并从正文中移除；正文仍为空时返回 `400 empty_translation_input`。
+
 ### `scene` 参数说明
 
 `scene` 是豆包上游接口唯一可调的行为参数，取值 `1`–`6`，默认 `2`（与旧版硬编码值一致，因此默认行为没有任何变化）。
@@ -173,6 +175,13 @@ npx wrangler secret put DOUBAO_COOKIE
 | 翻译结果总量 | 256 KB | `502 upstream_stream_error` |
 | 单批次超时 | 45 秒 | `504 upstream_timeout` |
 | 整个请求超时 | 90 秒 | `504 upstream_timeout` |
+
+### 错误重试与响应头
+
+- 上游 `5xx` 或网络异常会重试 **1 次**，退避时间为 `200–399 ms` 的随机值；第二次仍失败时返回原错误语义。
+- 上游 `429` **不重试**，返回 `429 upstream_rate_limit`，错误类型为 `rate_limit_error`。
+- 若上游返回 `Retry-After`，Worker 会校验后原样透传；响应同时通过 CORS 暴露 `Retry-After` 和 `x-request-id`。
+- 上游 SSE 未发送 `[DONE]` 时，只要所有输入索引都有非空译文，仍视为成功；缺少索引才返回 `502 upstream_incomplete_result`。
 
 ### 输入内容限制
 
@@ -269,11 +278,21 @@ npm run build
 
 在此目录创建 `.dev.vars`，按 `.dev.vars.example` 填写凭据，然后执行 `npm run dev`。命令行部署使用 `npm run deploy`。
 
-本仓库是自包含的：`worker.js` 就是最终产物，可以直接整份复制到 Cloudflare 控制台或通过本仓库按钮部署，不依赖任何父目录或构建步骤。`check-size.mjs` 只负责校验体积上限与语法。按钮部署及真实云端翻译仍需在自己的账号验收。
+本仓库是自包含的：`worker.js` 就是最终产物，可以直接整份复制到 Cloudflare 控制台或通过本仓库按钮部署，不依赖任何父目录或构建步骤。`npm run build` 会依次检查语法、运行 `test-hardening.mjs` 的 20 项回归测试并校验体积上限。按钮部署及真实云端翻译仍需在自己的账号验收。
 
 ---
 
 ## 更新记录
+
+### v0.2.1
+
+**稳定性与错误语义**
+
+- 上游 `429` 改为 `rate_limit_error`，并透传合法的 `Retry-After`；CORS 暴露 `Retry-After` 与 `x-request-id`。
+- 上游 `5xx` 和网络异常增加 1 次随机退避重试（`200–399 ms`），仍失败时保持原有 `502` / `504` 语义。
+- SSE 在索引完整时不再强制要求 `[DONE]`；索引缺失仍返回 `502 upstream_incomplete_result`。
+- 翻译指令允许省略冒号，支持 `Translate to <语言>` 与 `翻译成<语言>` 的首行形式，并避免把指令送入翻译正文。
+- 新增 `test-hardening.mjs`（20 项）并接入 `npm run build`。
 
 ### v0.2.0
 

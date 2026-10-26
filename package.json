@@ -1,12 +1,12 @@
 {
   "name": "doubao-translate2api-lite",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "license": "MIT",
   "type": "module",
   "engines": { "node": ">=24" },
   "scripts": {
-    "build": "node check-size.mjs && node --check worker.js",
+    "build": "node --check worker.js && node test-hardening.mjs && node check-size.mjs",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy"
   },

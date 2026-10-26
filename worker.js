@@ -1,4 +1,4 @@
-var S=new TextEncoder,E={"access-control-allow-origin":"*","access-control-allow-methods":"POST, GET, OPTIONS","access-control-allow-headers":"authorization, content-type, x-api-key, x-doubao-target-lang, x-doubao-scene"};function t(e,r,i=400){throw[e,r,i]}function z(e,r=200){return new Response(JSON.stringify(e),{status:r,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}})}function A(e){return!!e&&typeof e=="object"&&!Array.isArray(e)}function x(e,r=!1){let i;try{i=JSON.parse(e)}catch{}return A(i)||t("Invalid JSON object.",r?"upstream_stream_error":"invalid_request",r?502:400),i}async function v(e,r,i=!1){let o=e.body?.getReader();if(!o)return"";let n=new TextDecoder,l="",c=0;try{for(;;){let u=await o.read();if(u.done)return l+n.decode();c+=u.value.byteLength,c>r&&t("Body is too large.",i?"upstream_stream_error":"request_too_large",i?502:413),l+=n.decode(u.value,{stream:!0})}}finally{await o.cancel().catch(()=>{}),o.releaseLock()}}var j={"traditional chinese":"zh-Hant","simplified chinese":"zh","chinese":"zh","繁体中文":"zh-Hant","繁體中文":"zh-Hant","简体中文":"zh","中文":"zh","english":"en","英文":"en","英语":"en","japanese":"ja","日文":"ja","日语":"ja","korean":"ko","韩文":"ko","韩语":"ko","french":"fr","german":"de","spanish":"es","portuguese":"pt","russian":"ru","arabic":"ar","italian":"it","indonesian":"id","malay":"ms","thai":"th","vietnamese":"vi","filipino":"fil","tagalog":"fil","uzbek":"uz","zh-cn":"zh","zh-hans":"zh","zh-tw":"zh-Hant","zh-hk":"zh-Hant","simplified mandarin chinese":"zh","traditional mandarin chinese":"zh-Hant","cantonese":"zh","standard arabic":"ar","bengali":"bn","hindi":"hi","javanese (javanese)":"jv","javanese":"jv","telugu":"te","marathi":"mr","tamil":"ta","turkish":"tr","urdu":"ur","gujarati":"gu","polish":"pl","ukrainian":"uk","kannada":"kn","malayalam":"ml","iranian persian":"fa","burmese":"my","swahili (individual language)":"sw","swahili":"sw","sundanese":"su","romanian":"ro","panjabi":"pa","amharic":"am","hausa":"ha","nigerian fulfulde":"ff","bosnian (cyrillic)":"bs","bosnian":"bs","croatian":"hr","dutch":"nl","serbian (cyrillic)":"sr","serbian":"sr","central kurdish":"ku","yoruba":"yo","northern uzbek (cyrillic)":"uz","northern uzbek":"uz","malay (individual language) (arabic)":"ms","igbo":"ig","nepali (individual language)":"ne","nepali":"ne","hungarian":"hu","north azerbaijani (cyrillic)":"az","north azerbaijani":"az","sinhala":"si","modern greek (1453-)":"el","modern greek":"el","czech":"cs","belarusian":"be","nyanja":"ny","kinyarwanda":"rw","zulu":"zu","bulgarian":"bg","swedish":"sv","lingala":"ln","somali":"so","kazakh":"kk","hebrew":"he","norwegian bokmål":"nb","norwegian nynorsk":"nn","afrikaans":"af","albanian":"sq","assamese":"as","basque":"eu","breton":"br","catalan":"ca","corsican":"co","welsh":"cy","danish":"da","divehi":"dv","esperanto":"eo","estonian":"et","faroese":"fo","fijian":"fj","finnish":"fi","western frisian":"fy","scottish gaelic":"gd","irish":"ga","galician":"gl","guarani":"gn","haitian creole":"ht","armenian":"hy","ido":"io","interlingua":"ia","icelandic":"is","georgian":"ka","khmer":"km","kyrgyz":"ky","lao":"lo","latin":"la","latvian":"lv","lithuanian":"lt","luxembourgish":"lb","macedonian":"mk","maltese":"mt","mongolian":"mn","maori":"mi","occitan":"oc","odia":"or","oromo":"om","sanskrit":"sa","slovak":"sk","slovenian":"sl","samoan":"sm","shona":"sn","sindhi":"sd","southern sotho":"st","tahitian":"ty","tatar":"tt","tajik":"tg","tigrinya":"ti","tongan":"to","tswana":"tn","turkmen":"tk","uyghur":"ug","volapük":"vo","wolof":"wo","xhosa":"xh","eastern yiddish":"yi","akan":"ak","bambara":"bm","bislama":"bi","tibetan":"bo","chechen":"ce","chuvash":"cv","dzongkha":"dz","ewe":"ee","ganda":"lg","ossetian":"os","swati":"ss","venda":"ve","north ndebele":"nd","south ndebele":"nr","chamorro":"ch","marshallese":"mh"};var KNOWN_LANGS=["zh","zh-Hant","en","ja","ko","fr","de","es","es-ES","pt","ru","ar","it","id","ms","th","vi","fil","uz","bn","hi","jv","te","mr","ta","tr","ur","gu","pl","uk","kn","ml","fa","my","sw","su","ro","pa","am","ha","ff","bs","hr","nl","sr","ku","yo","ig","ne","hu","az","si","el","cs","be","ny","rw","zu","bg","sv","ln","so","kk","he","nb","nn","af","sq","as","eu","br","ca","co","cy","da","dv","eo","et","fo","fj","fi","fy","gd","ga","gl","gn","ht","hy","io","ia","is","ka","km","ky","lo","la","lv","lt","lb","mk","mt","mn","mi","oc","or","om","sa","sk","sl","sm","sn","sd","st","ty","tt","tg","ti","to","tn","tk","ug","vo","wo","xh","yi","ak","bm","bi","bo","ce","cv","dz","ee","lg","os","ss","ve","nd","nr","ch","mh"];
+var S=new TextEncoder,E={"access-control-allow-origin":"*","access-control-allow-methods":"POST, GET, OPTIONS","access-control-allow-headers":"authorization, content-type, x-api-key, x-doubao-target-lang, x-doubao-scene","access-control-expose-headers":"retry-after, x-request-id"};function t(e,r,i=400,h){throw[e,r,i,h]}function z(e,r=200){return new Response(JSON.stringify(e),{status:r,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}})}function A(e){return!!e&&typeof e=="object"&&!Array.isArray(e)}function x(e,r=!1){let i;try{i=JSON.parse(e)}catch{}return A(i)||t("Invalid JSON object.",r?"upstream_stream_error":"invalid_request",r?502:400),i}async function v(e,r,i=!1){let o=e.body?.getReader();if(!o)return"";let n=new TextDecoder,l="",c=0;try{for(;;){let u=await o.read();if(u.done)return l+n.decode();c+=u.value.byteLength,c>r&&t("Body is too large.",i?"upstream_stream_error":"request_too_large",i?502:413),l+=n.decode(u.value,{stream:!0})}}finally{await o.cancel().catch(()=>{}),o.releaseLock()}}var j={"traditional chinese":"zh-Hant","simplified chinese":"zh","chinese":"zh","繁体中文":"zh-Hant","繁體中文":"zh-Hant","简体中文":"zh","中文":"zh","english":"en","英文":"en","英语":"en","japanese":"ja","日文":"ja","日语":"ja","korean":"ko","韩文":"ko","韩语":"ko","french":"fr","german":"de","spanish":"es","portuguese":"pt","russian":"ru","arabic":"ar","italian":"it","indonesian":"id","malay":"ms","thai":"th","vietnamese":"vi","filipino":"fil","tagalog":"fil","uzbek":"uz","zh-cn":"zh","zh-hans":"zh","zh-tw":"zh-Hant","zh-hk":"zh-Hant","simplified mandarin chinese":"zh","traditional mandarin chinese":"zh-Hant","cantonese":"zh","standard arabic":"ar","bengali":"bn","hindi":"hi","javanese (javanese)":"jv","javanese":"jv","telugu":"te","marathi":"mr","tamil":"ta","turkish":"tr","urdu":"ur","gujarati":"gu","polish":"pl","ukrainian":"uk","kannada":"kn","malayalam":"ml","iranian persian":"fa","burmese":"my","swahili (individual language)":"sw","swahili":"sw","sundanese":"su","romanian":"ro","panjabi":"pa","amharic":"am","hausa":"ha","nigerian fulfulde":"ff","bosnian (cyrillic)":"bs","bosnian":"bs","croatian":"hr","dutch":"nl","serbian (cyrillic)":"sr","serbian":"sr","central kurdish":"ku","yoruba":"yo","northern uzbek (cyrillic)":"uz","northern uzbek":"uz","malay (individual language) (arabic)":"ms","igbo":"ig","nepali (individual language)":"ne","nepali":"ne","hungarian":"hu","north azerbaijani (cyrillic)":"az","north azerbaijani":"az","sinhala":"si","modern greek (1453-)":"el","modern greek":"el","czech":"cs","belarusian":"be","nyanja":"ny","kinyarwanda":"rw","zulu":"zu","bulgarian":"bg","swedish":"sv","lingala":"ln","somali":"so","kazakh":"kk","hebrew":"he","norwegian bokmål":"nb","norwegian nynorsk":"nn","afrikaans":"af","albanian":"sq","assamese":"as","basque":"eu","breton":"br","catalan":"ca","corsican":"co","welsh":"cy","danish":"da","divehi":"dv","esperanto":"eo","estonian":"et","faroese":"fo","fijian":"fj","finnish":"fi","western frisian":"fy","scottish gaelic":"gd","irish":"ga","galician":"gl","guarani":"gn","haitian creole":"ht","armenian":"hy","ido":"io","interlingua":"ia","icelandic":"is","georgian":"ka","khmer":"km","kyrgyz":"ky","lao":"lo","latin":"la","latvian":"lv","lithuanian":"lt","luxembourgish":"lb","macedonian":"mk","maltese":"mt","mongolian":"mn","maori":"mi","occitan":"oc","odia":"or","oromo":"om","sanskrit":"sa","slovak":"sk","slovenian":"sl","samoan":"sm","shona":"sn","sindhi":"sd","southern sotho":"st","tahitian":"ty","tatar":"tt","tajik":"tg","tigrinya":"ti","tongan":"to","tswana":"tn","turkmen":"tk","uyghur":"ug","volapük":"vo","wolof":"wo","xhosa":"xh","eastern yiddish":"yi","akan":"ak","bambara":"bm","bislama":"bi","tibetan":"bo","chechen":"ce","chuvash":"cv","dzongkha":"dz","ewe":"ee","ganda":"lg","ossetian":"os","swati":"ss","venda":"ve","north ndebele":"nd","south ndebele":"nr","chamorro":"ch","marshallese":"mh"};var KNOWN_LANGS=["zh","zh-Hant","en","ja","ko","fr","de","es","es-ES","pt","ru","ar","it","id","ms","th","vi","fil","uz","bn","hi","jv","te","mr","ta","tr","ur","gu","pl","uk","kn","ml","fa","my","sw","su","ro","pa","am","ha","ff","bs","hr","nl","sr","ku","yo","ig","ne","hu","az","si","el","cs","be","ny","rw","zu","bg","sv","ln","so","kk","he","nb","nn","af","sq","as","eu","br","ca","co","cy","da","dv","eo","et","fo","fj","fi","fy","gd","ga","gl","gn","ht","hy","io","ia","is","ka","km","ky","lo","la","lv","lt","lb","mk","mt","mn","mi","oc","or","om","sa","sk","sl","sm","sn","sd","st","ty","tt","tg","ti","to","tn","tk","ug","vo","wo","xh","yi","ak","bm","bi","bo","ce","cv","dz","ee","lg","os","ss","ve","nd","nr","ch","mh"];
 function normalizeRegionCode(e,r){
   // e is already lowercased, "_"->"-", parens stripped, spaces collapsed.
   let i=e.indexOf("-");
@@ -36,5 +36,587 @@ function normalizeLangGuess(raw){
   if(/spanish/.test(compact))return"es";
   return null
 }
-function k(e){typeof e!="string"&&t("Target language must be a string.","unsupported_target_language");let r=e.trim().toLowerCase(),n=normalizeLangGuess(r);return n||t("Unsupported target language. Use target_lang with a language code.","unsupported_target_language"),n}function R(e,r,i){(!Array.isArray(e.messages)||!e.messages.every(A))&&t("A messages array is required.","invalid_request");let o=e.messages,n=o.findLast(s=>s.role==="user");typeof n?.content!="string"&&t("A plain-text user message is required.","unsupported_input");let l=n.content.match(/^(?:please\s+)?translate[^\n:：]{1,160}[:：][ \t]*(?:\r\n|\r|\n)*/i)??n.content.match(/^(?:请)?翻译(?:成|为)[^\n:：]{1,80}[:：][ \t]*(?:\r\n|\r|\n)*/),c=o.filter(s=>s.role==="system"||s.role==="developer").map(s=>typeof s.content=="string"?s.content:""),u=/(?:\btranslate\b[^\n:：]{0,160}?\b(?:to|into)\s+|翻译(?:成|为)|(?:target|output)\s+language\s*[:：]\s*)([^\n:：.!]+)(?=[:：.!]|$)/i,h=e.target_lang??r.headers.get("x-doubao-target-lang"),f;if(h!==null)f=k(h);else{let q=l?.[0].match(u)?.[1];if(q!==void 0)f=k(q);else{let vals=[];for(let s of c){let m=s.match(u)?.[1];if(m===void 0)continue;let v=null;try{v=k(m)}catch{}v&&vals.push(v)}let uniq=[...new Set(vals)];uniq.length>1&&t("Conflicting target languages.","invalid_request");f=uniq[0]??k(i.DOUBAO_DEFAULT_TARGET_LANG??"zh")}}let p=l?n.content.slice(l[0].length):n.content;p.trim()||t("Translation input is empty.","empty_translation_input"),p.length>2e4&&t("Text exceeds 20,000 characters.","request_too_large",413),(/^\s*<(?:yaml|text)\b/i.test(p)||/<\/(?:html|a|p|div|span|code|pre|h[1-6]|strong|em|br|ul|li|table)\b|<(?:html|a|p|div|span|code|pre|h[1-6]|strong|em|br|ul|li|table)\b[^>]*(?:=|\/)[^>]*>/i.test(p))&&t("Use a plain-text template; HTML and YAML wrappers are unsupported.","unsupported_input");let m=p.split(/((?:\r\n|\r|\n)+)/),a=[];for(let s=0;s<m.length;s+=2){let b=m[s]??"",T=m[s+1]??"";!b.trim()||/^[ \t]*%%[ \t]*$/.test(b)?a.push({text:"",separator:b+T}):(b.length>1e4&&t("One line exceeds 10,000 characters.","request_too_large",413),a.push({text:b,separator:T}))}let w=a.filter(s=>s.text).map(s=>s.text);w.length||t("Translation input is empty.","empty_translation_input");let d=[],_=[],y=0;for(let s of w)(_.length===50||y+s.length>1e4)&&(d.push(_),_=[],y=0),_.push(s),y+=s.length;return d.push(_),d.length>4&&t("Text exceeds four batches (50 lines / 10,000 characters each).","request_too_large",413),{target:f,segments:a,batches:d}}function O(e){e.code===void 0||e.code===0||(e.code===710012001&&t("Doubao login has expired.","upstream_auth_error",502),t("Doubao translation failed.","upstream_stream_error",502))}function parseUpstreamJson(e){let r;try{r=JSON.parse(e)}catch{}return A(r)||t("Invalid Doubao stream JSON.","upstream_stream_error",502),r}
-function resolveScene(e,r){let s=e.headers.get("x-doubao-scene");if(s!==null&&s.trim()!==""){let v=Number(s.trim());return Number.isInteger(v)&&v>=1&&v<=6?v:t("x-doubao-scene must be an integer from 1 to 6.","invalid_request")}let d=r.DOUBAO_DEFAULT_SCENE;if(d===void 0||d===null||String(d).trim()==="")return 2;let v=Number(String(d).trim());return Number.isInteger(v)&&v>=1&&v<=6?v:t("DOUBAO_DEFAULT_SCENE must be an integer from 1 to 6.","configuration_error",503)}async function D(e,r,i,o,s){try{let n=await fetch("https://www.doubao.com/samantha/plugin/stream_article_translate",{method:"POST",redirect:"manual",signal:o,headers:{"content-type":"application/json",accept:"*/*",cookie:i},body:JSON.stringify({raw_text:e,target_lang:r,translate_service:"1",scene:s,frontend_source:1})});n.ok||(await n.body?.cancel().catch(()=>{}),n.status===429&&t("Doubao rate limit reached.","upstream_rate_limit",429),t("Doubao access refused or request failed.","upstream_http_error",502));let l=(await v(n,512*1024,!0)).replace(/\r\n|\r/g,"\n").trimStart();if(!l)t("Doubao returned an empty response.","upstream_incomplete_result",502);if(l.startsWith("{")){O(parseUpstreamJson(l)),t("Upstream returned no translations.","upstream_incomplete_result",502)}let c=new Map,u=!1;for(let h of l.split(/\n\n+/)){let g="message",f=[];for(let a of h.split("\n")){let q=a.trimEnd();if(!q||q.startsWith(":"))continue;q.startsWith("event:")&&(g=q.slice(6).trim()),q.startsWith("data:")&&f.push(q.slice(5).replace(/^ /,""))}if(!f.length)continue;let text=f.join("\n").trim();if(text==="[DONE]"){u=!0;continue}if(!["json","message","err","done"].includes(g))continue;if(g==="done"){text&&O(parseUpstreamJson(text)),u=!0;continue}let p=parseUpstreamJson(text);O(p),g==="err"&&t("Upstream stream reported an error.","upstream_stream_error",502);let m=A(p.data)&&Array.isArray(p.data.items)?p.data.items:[];for(let a of m)(!A(a)||typeof a.index!="number"||!Number.isInteger(a.index)||a.index<0||a.index>=e.length||typeof a.res!="string"||!a.res.trim())&&t("Invalid upstream translation item.","upstream_stream_error",502),c.set(a.index,a.res)}return(!u||c.size!==e.length)&&t("Upstream translation is incomplete.","upstream_incomplete_result",502),e.map((h,g)=>c.get(g))}catch(n){if(Array.isArray(n))throw n;o.aborted&&t("Doubao request timed out.","upstream_timeout",504),t("Doubao connection failed.","upstream_network_error",502)}}async function L(e,r,i){let o=new URL(e.url);if(e.method==="GET"&&o.pathname==="/health")return z({status:"ok",runtime:"cloudflare-workers-lite"});if(e.method==="OPTIONS")return new Response(null,{status:204});o.pathname!=="/v1/chat/completions"&&t("Route not found.","not_found",404),e.method!=="POST"&&t("POST is required.","method_not_allowed",405);let n=r.DOUBAO_COOKIE?.replace(/^Cookie:\s*/i,"").trim();(!r.API_KEY||r.API_KEY.length<16||/\s/.test(r.API_KEY)||!n||/[\r\n]/.test(n)||!["sessionid","sid_tt","uid_tt"].every(d=>new RegExp(`(?:^|;\\s*)${d}=[^;\\s]+`).test(n)))&&t("Worker secrets are missing or invalid.","configuration_error",503),(e.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1]??e.headers.get("x-api-key"))!==r.API_KEY&&t("Invalid or missing API Key.","unauthorized",401);let c=x(await v(e,64*1024));c.stream!==void 0&&c.stream!==!1&&t("Disable stream in Lite mode.","unsupported_feature"),["tools","functions","reasoning"].some(d=>c[d]!==void 0)&&t("Only plain-text translation is supported.","unsupported_feature"),c.model!==void 0&&c.model!=="doubao-ai"&&t("Only doubao-ai is supported.","model_not_found",404);function resolveConcurrency(e){let c=e.DOUBAO_MAX_CONCURRENCY;if(c===void 0||c===null||String(c).trim()==="")return 4;let v=Number(String(c).trim());return Number.isInteger(v)&&v>=1&&v<=4?v:t("DOUBAO_MAX_CONCURRENCY must be an integer from 1 to 4.","configuration_error",503)}let scene=resolveScene(e,r),{target:u,segments:h,batches:g}=R(c,e,r),f=[],p=AbortSignal.timeout(9e4),m=0,k=resolveConcurrency(r);for(let i=0;i<g.length;i+=k){let rs=await Promise.all(g.slice(i,i+k).map(d=>D(d,u,n,AbortSignal.any([p,e.signal,AbortSignal.timeout(45e3)]),scene)));for(let _ of rs)for(let y of _)m+=S.encode(y).byteLength,m>256*1024&&t("Translation output is too large.","upstream_stream_error",502),f.push(y)}let a=0,w=h.map(d=>(d.text?f[a++]:"")+d.separator).join("");return z({id:`chatcmpl_${i.replaceAll("-","")}`,object:"chat.completion",created:Math.floor(Date.now()/1e3),model:"doubao-ai",choices:[{index:0,message:{role:"assistant",content:w},finish_reason:"stop"}],usage:{prompt_tokens:0,completion_tokens:0,total_tokens:0}})}var I={async fetch(e,r){let i=crypto.randomUUID(),o;try{o=await L(e,r,i)}catch(n){let[l,c,u]=Array.isArray(n)?n:["Lite Worker failed.","internal_error",500];o=z({error:{type:u===401?"authentication_error":u<500?"invalid_request_error":"api_error",message:l,code:c,param:null}},u)}o.headers.set("x-request-id",i);for(let[n,l]of Object.entries(E))o.headers.set(n,l);return o}};export{I as default};
+
+const LANGUAGE_PATTERN =
+  /(?:\btranslate\b[^\n:：]{0,160}?\b(?:to|into)\s+|翻译(?:成|为)|(?:target|output)\s+language\s*[:：]\s*)([^\n:：.!]+)(?=[:：.!]|$)/i;
+
+function targetLang(value) {
+  if (typeof value !== "string") {
+    t("Target language must be a string.", "unsupported_target_language");
+  }
+  const normalized = normalizeLangGuess(value.trim().toLowerCase());
+  if (!normalized) {
+    t(
+      "Unsupported target language. Use target_lang with a language code.",
+      "unsupported_target_language",
+    );
+  }
+  return normalized;
+}
+
+function stripInstruction(content) {
+  const colonMatch =
+    content.match(/^(?:please\s+)?translate[^\n:：]{1,160}[:：][ \t]*/i) ??
+    content.match(/^(?:请)?翻译(?:成|为)[^\n:：]{1,80}[:：][ \t]*/);
+
+  if (colonMatch) {
+    return {
+      instruction: colonMatch[0],
+      body: content
+        .slice(colonMatch[0].length)
+        .replace(/^(?:\r\n|\r|\n)+/, ""),
+    };
+  }
+
+  // Some clients omit the colon. Treat a leading directive line as an
+  // instruction instead of translating the directive itself.
+  const firstLine = content.match(/^[^\r\n]*/)?.[0] ?? "";
+  const newlineDirective =
+    /^(?:please\s+)?translate\b[^\r\n:：]{0,160}?\b(?:to|into)\s+\S[^\r\n]*$/i.test(
+      firstLine,
+    ) || /^(?:请)?翻译(?:成|为)\s*\S[^\r\n]*$/.test(firstLine);
+
+  if (newlineDirective) {
+    return {
+      instruction: firstLine,
+      body: content.slice(firstLine.length).replace(/^(?:\r\n|\r|\n)+/, ""),
+    };
+  }
+
+  return { instruction: "", body: content };
+}
+
+function resolveConcurrency(env) {
+  const raw = env.DOUBAO_MAX_CONCURRENCY;
+  if (raw === undefined || raw === null || String(raw).trim() === "") {
+    return 4;
+  }
+  const value = Number(String(raw).trim());
+  if (Number.isInteger(value) && value >= 1 && value <= 4) {
+    return value;
+  }
+  t(
+    "DOUBAO_MAX_CONCURRENCY must be an integer from 1 to 4.",
+    "configuration_error",
+    503,
+  );
+}
+
+function resolveScene(request, env) {
+  const header = request.headers.get("x-doubao-scene");
+  if (header !== null && header.trim() !== "") {
+    const value = Number(header.trim());
+    if (Number.isInteger(value) && value >= 1 && value <= 6) {
+      return value;
+    }
+    t(
+      "x-doubao-scene must be an integer from 1 to 6.",
+      "invalid_request",
+    );
+  }
+
+  const configured = env.DOUBAO_DEFAULT_SCENE;
+  if (
+    configured === undefined ||
+    configured === null ||
+    String(configured).trim() === ""
+  ) {
+    return 2;
+  }
+  const value = Number(String(configured).trim());
+  if (Number.isInteger(value) && value >= 1 && value <= 6) {
+    return value;
+  }
+  t(
+    "DOUBAO_DEFAULT_SCENE must be an integer from 1 to 6.",
+    "configuration_error",
+    503,
+  );
+}
+
+function checkUpstreamCode(payload) {
+  if (payload.code === undefined || payload.code === 0) {
+    return;
+  }
+  if (payload.code === 710012001) {
+    t("Doubao login has expired.", "upstream_auth_error", 502);
+  }
+  t("Doubao translation failed.", "upstream_stream_error", 502);
+}
+
+function parseUpstreamJson(text) {
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch {}
+  if (!A(payload)) {
+    t("Invalid Doubao stream JSON.", "upstream_stream_error", 502);
+  }
+  return payload;
+}
+
+function retryAfterHeader(value) {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length <= 128 && !/[\r\n]/.test(trimmed)
+    ? { "retry-after": trimmed }
+    : undefined;
+}
+
+function randomBackoff() {
+  return 200 + Math.floor(Math.random() * 200);
+}
+
+function delayWithAbort(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+async function translateBatch(rawText, target, cookie, signal, scene) {
+  let retried = false;
+
+  for (;;) {
+    try {
+      const response = await fetch(
+        "https://www.doubao.com/samantha/plugin/stream_article_translate",
+        {
+          method: "POST",
+          redirect: "manual",
+          signal,
+          headers: {
+            "content-type": "application/json",
+            accept: "*/*",
+            cookie,
+          },
+          body: JSON.stringify({
+            raw_text: rawText,
+            target_lang: target,
+            translate_service: "1",
+            scene,
+            frontend_source: 1,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const status = response.status;
+        const retryAfter = retryAfterHeader(
+          response.headers.get("retry-after"),
+        );
+        await response.body?.cancel().catch(() => {});
+
+        if (status >= 500 && status <= 599 && !retried) {
+          retried = true;
+          await delayWithAbort(randomBackoff(), signal);
+          continue;
+        }
+        if (status === 429) {
+          t(
+            "Doubao rate limit reached.",
+            "upstream_rate_limit",
+            429,
+            retryAfter,
+          );
+        }
+        t(
+          "Doubao access refused or request failed.",
+          "upstream_http_error",
+          502,
+        );
+      }
+
+      const streamText = (await v(response, 512 * 1024, true))
+        .replace(/\r\n|\r/g, "\n")
+        .trimStart();
+      if (!streamText) {
+        t(
+          "Doubao returned an empty response.",
+          "upstream_incomplete_result",
+          502,
+        );
+      }
+      if (streamText.startsWith("{")) {
+        checkUpstreamCode(parseUpstreamJson(streamText));
+        t(
+          "Upstream returned no translations.",
+          "upstream_incomplete_result",
+          502,
+        );
+      }
+
+      const translations = new Map();
+      for (const block of streamText.split(/\n\n+/)) {
+        let event = "message";
+        const data = [];
+        for (const line of block.split("\n")) {
+          const trimmed = line.trimEnd();
+          if (!trimmed || trimmed.startsWith(":")) continue;
+          if (trimmed.startsWith("event:")) {
+            event = trimmed.slice(6).trim();
+          }
+          if (trimmed.startsWith("data:")) {
+            data.push(trimmed.slice(5).replace(/^ /, ""));
+          }
+        }
+        if (!data.length) continue;
+
+        const payloadText = data.join("\n").trim();
+        if (payloadText === "[DONE]") continue;
+        if (!["json", "message", "err", "done"].includes(event)) continue;
+        if (event === "done") {
+          if (payloadText) checkUpstreamCode(parseUpstreamJson(payloadText));
+          continue;
+        }
+
+        const payload = parseUpstreamJson(payloadText);
+        checkUpstreamCode(payload);
+        if (event === "err") {
+          t(
+            "Upstream stream reported an error.",
+            "upstream_stream_error",
+            502,
+          );
+        }
+
+        const items =
+          A(payload.data) && Array.isArray(payload.data.items)
+            ? payload.data.items
+            : [];
+        for (const item of items) {
+          if (
+            !A(item) ||
+            typeof item.index !== "number" ||
+            !Number.isInteger(item.index) ||
+            item.index < 0 ||
+            item.index >= rawText.length ||
+            typeof item.res !== "string" ||
+            !item.res.trim()
+          ) {
+            t(
+              "Invalid upstream translation item.",
+              "upstream_stream_error",
+              502,
+            );
+          }
+          translations.set(item.index, item.res);
+        }
+      }
+
+      // A complete index set is sufficient; [DONE] is optional.
+      if (translations.size !== rawText.length) {
+        t(
+          "Upstream translation is incomplete.",
+          "upstream_incomplete_result",
+          502,
+        );
+      }
+      return rawText.map((_, index) => translations.get(index));
+    } catch (error) {
+      if (Array.isArray(error)) throw error;
+      if (!retried && !signal?.aborted) {
+        retried = true;
+        try {
+          await delayWithAbort(randomBackoff(), signal);
+        } catch {
+          t("Doubao request timed out.", "upstream_timeout", 504);
+        }
+        continue;
+      }
+      if (signal?.aborted) {
+        t("Doubao request timed out.", "upstream_timeout", 504);
+      }
+      t("Doubao connection failed.", "upstream_network_error", 502);
+    }
+  }
+}
+
+function parseTranslationRequest(body, request, env) {
+  if (!Array.isArray(body.messages) || !body.messages.every(A)) {
+    t("A messages array is required.", "invalid_request");
+  }
+
+  const messages = body.messages;
+  const user = messages.findLast((message) => message.role === "user");
+  if (typeof user?.content !== "string") {
+    t("A plain-text user message is required.", "unsupported_input");
+  }
+
+  const { instruction, body: text } = stripInstruction(user.content);
+  const systemTexts = messages
+    .filter(
+      (message) =>
+        message.role === "system" || message.role === "developer",
+    )
+    .map((message) =>
+      typeof message.content === "string" ? message.content : "",
+    );
+
+  const explicit =
+    body.target_lang ?? request.headers.get("x-doubao-target-lang");
+  let target;
+  if (explicit !== null) {
+    target = targetLang(explicit);
+  } else {
+    const fromInstruction = instruction.match(LANGUAGE_PATTERN)?.[1];
+    if (fromInstruction !== undefined) {
+      target = targetLang(fromInstruction);
+    } else {
+      const guesses = [];
+      for (const systemText of systemTexts) {
+        const guess = systemText.match(LANGUAGE_PATTERN)?.[1];
+        if (guess === undefined) continue;
+        try {
+          const code = targetLang(guess);
+          if (code) guesses.push(code);
+        } catch {}
+      }
+      const unique = [...new Set(guesses)];
+      if (unique.length > 1) {
+        t("Conflicting target languages.", "invalid_request");
+      }
+      target =
+        unique[0] ?? targetLang(env.DOUBAO_DEFAULT_TARGET_LANG ?? "zh");
+    }
+  }
+
+  if (!text.trim()) {
+    t("Translation input is empty.", "empty_translation_input");
+  }
+  if (text.length > 20000) {
+    t("Text exceeds 20,000 characters.", "request_too_large", 413);
+  }
+  if (
+    /^\s*<(?:yaml|text)\b/i.test(text) ||
+    /<\/(?:html|a|p|div|span|code|pre|h[1-6]|strong|em|br|ul|li|table)\b|<(?:html|a|p|div|span|code|pre|h[1-6]|strong|em|br|ul|li|table)\b[^>]*(?:=|\/)[^>]*>/i.test(
+      text,
+    )
+  ) {
+    t(
+      "Use a plain-text template; HTML and YAML wrappers are unsupported.",
+      "unsupported_input",
+    );
+  }
+
+  const parts = text.split(/((?:\r\n|\r|\n)+)/);
+  const segments = [];
+  for (let index = 0; index < parts.length; index += 2) {
+    const line = parts[index] ?? "";
+    const separator = parts[index + 1] ?? "";
+    if (!line.trim() || /^[ \t]*%%[ \t]*$/.test(line)) {
+      segments.push({ text: "", separator: line + separator });
+    } else {
+      if (line.length > 10000) {
+        t("One line exceeds 10,000 characters.", "request_too_large", 413);
+      }
+      segments.push({ text: line, separator });
+    }
+  }
+
+  const lines = segments.filter((segment) => segment.text).map((segment) => segment.text);
+  if (!lines.length) {
+    t("Translation input is empty.", "empty_translation_input");
+  }
+
+  const batches = [];
+  let current = [];
+  let currentLength = 0;
+  for (const line of lines) {
+    if (current.length === 50 || currentLength + line.length > 10000) {
+      batches.push(current);
+      current = [];
+      currentLength = 0;
+    }
+    current.push(line);
+    currentLength += line.length;
+  }
+  batches.push(current);
+  if (batches.length > 4) {
+    t(
+      "Text exceeds four batches (50 lines / 10,000 characters each).",
+      "request_too_large",
+      413,
+    );
+  }
+
+  return { target, segments, batches };
+}
+
+async function handleRequest(request, env, requestId) {
+  const url = new URL(request.url);
+  if (request.method === "GET" && url.pathname === "/health") {
+    return z({ status: "ok", runtime: "cloudflare-workers-lite" });
+  }
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204 });
+  }
+  if (url.pathname !== "/v1/chat/completions") {
+    t("Route not found.", "not_found", 404);
+  }
+  if (request.method !== "POST") {
+    t("POST is required.", "method_not_allowed", 405);
+  }
+
+  const cookie = env.DOUBAO_COOKIE?.replace(/^Cookie:\s*/i, "").trim();
+  if (
+    !env.API_KEY ||
+    env.API_KEY.length < 16 ||
+    /\s/.test(env.API_KEY) ||
+    !cookie ||
+    /[\r\n]/.test(cookie) ||
+    !["sessionid", "sid_tt", "uid_tt"].every((name) =>
+      new RegExp(`(?:^|;\\s*)${name}=[^;\\s]+`).test(cookie),
+    )
+  ) {
+    t(
+      "Worker secrets are missing or invalid.",
+      "configuration_error",
+      503,
+    );
+  }
+
+  const providedKey =
+    request.headers
+      .get("authorization")
+      ?.match(/^Bearer\s+(.+)$/i)?.[1] ??
+    request.headers.get("x-api-key");
+  if (providedKey !== env.API_KEY) {
+    t("Invalid or missing API Key.", "unauthorized", 401);
+  }
+
+  const body = x(await v(request, 64 * 1024));
+  if (body.stream !== undefined && body.stream !== false) {
+    t("Disable stream in Lite mode.", "unsupported_feature");
+  }
+  if (
+    ["tools", "functions", "reasoning"].some(
+      (field) => body[field] !== undefined,
+    )
+  ) {
+    t(
+      "Only plain-text translation is supported.",
+      "unsupported_feature",
+    );
+  }
+  if (body.model !== undefined && body.model !== "doubao-ai") {
+    t("Only doubao-ai is supported.", "model_not_found", 404);
+  }
+
+  const scene = resolveScene(request, env);
+  const { target, segments, batches } = parseTranslationRequest(
+    body,
+    request,
+    env,
+  );
+  const results = [];
+  const overallTimeout = AbortSignal.timeout(90000);
+  const concurrency = resolveConcurrency(env);
+  let outputBytes = 0;
+
+  for (let offset = 0; offset < batches.length; offset += concurrency) {
+    const group = await Promise.all(
+      batches
+        .slice(offset, offset + concurrency)
+        .map((batch) =>
+          translateBatch(
+            batch,
+            target,
+            cookie,
+            AbortSignal.any([
+              overallTimeout,
+              request.signal,
+              AbortSignal.timeout(45000),
+            ]),
+            scene,
+          ),
+        ),
+    );
+    for (const batchResult of group) {
+      for (const translation of batchResult) {
+        outputBytes += S.encode(translation).byteLength;
+        if (outputBytes > 256 * 1024) {
+          t(
+            "Translation output is too large.",
+            "upstream_stream_error",
+            502,
+          );
+        }
+        results.push(translation);
+      }
+    }
+  }
+
+  let resultIndex = 0;
+  const content = segments
+    .map(
+      (segment) =>
+        (segment.text ? results[resultIndex++] : "") + segment.separator,
+    )
+    .join("");
+
+  return z({
+    id: `chatcmpl_${requestId.replaceAll("-", "")}`,
+    object: "chat.completion",
+    created: Math.floor(Date.now() / 1000),
+    model: "doubao-ai",
+    choices: [
+      {
+        index: 0,
+        message: { role: "assistant", content },
+        finish_reason: "stop",
+      },
+    ],
+    usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+  });
+}
+
+const worker = {
+  async fetch(request, env) {
+    const requestId = crypto.randomUUID();
+    let response;
+    try {
+      response = await handleRequest(request, env, requestId);
+    } catch (error) {
+      const [message, code, status, headers] = Array.isArray(error)
+        ? error
+        : ["Lite Worker failed.", "internal_error", 500];
+      const statusCode = Number.isInteger(status) ? status : 500;
+      const type =
+        statusCode === 429
+          ? "rate_limit_error"
+          : statusCode === 401
+            ? "authentication_error"
+            : statusCode < 500
+              ? "invalid_request_error"
+              : "api_error";
+      response = z(
+        { error: { type, message, code, param: null } },
+        statusCode,
+      );
+      if (headers) {
+        for (const [name, value] of Object.entries(headers)) {
+          response.headers.set(name, value);
+        }
+      }
+    }
+
+    response.headers.set("x-request-id", requestId);
+    for (const [name, value] of Object.entries(E)) {
+      response.headers.set(name, value);
+    }
+    return response;
+  },
+};
+
+export default worker;
