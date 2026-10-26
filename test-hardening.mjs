@@ -329,6 +329,146 @@ check(
   JSON.stringify({ status: result.status, calls }),
 );
 
+let capturedRawText;
+globalThis.fetch = async (_url, init) => {
+  const body = JSON.parse(init.body);
+  capturedRawText = body.raw_text;
+  return upstream(
+    body.raw_text.map((text, index) => ({
+      index,
+      res: `T[${text}]`,
+    })),
+  );
+};
+result = await call("Translate into Chinese:\nfirst line\nsecond line", {
+  headers: { "x-doubao-context-mode": "default" },
+});
+check(
+  "default mode still splits internal line breaks",
+  result.status === 200 &&
+    JSON.stringify(capturedRawText) ===
+      JSON.stringify(["first line", "second line"]),
+  JSON.stringify({ status: result.status, rawText: capturedRawText }),
+);
+
+capturedRawText = undefined;
+globalThis.fetch = async (_url, init) => {
+  const body = JSON.parse(init.body);
+  capturedRawText = body.raw_text;
+  return upstream(
+    body.raw_text.map((text, index) => ({
+      index,
+      res: `T[${text}]`,
+    })),
+  );
+};
+result = await call("Translate into Chinese:\nfirst line\nsecond line", {
+  headers: { "x-doubao-context-mode": "subtitle" },
+});
+check(
+  "subtitle mode keeps one cue's internal line breaks together",
+  result.status === 200 &&
+    JSON.stringify(capturedRawText) ===
+      JSON.stringify(["first line\nsecond line"]),
+  JSON.stringify({ status: result.status, rawText: capturedRawText }),
+);
+
+capturedRawText = undefined;
+globalThis.fetch = async (_url, init) => {
+  const body = JSON.parse(init.body);
+  capturedRawText = body.raw_text;
+  return upstream(
+    body.raw_text.map((text, index) => ({
+      index,
+      res: `T[${text}]`,
+    })),
+  );
+};
+result = await call(
+  "Translate into Chinese:\nfirst cue\n\n%%\n\nsecond cue",
+  { headers: { "x-doubao-context-mode": "subtitle" } },
+);
+check(
+  "subtitle mode keeps %% as cue boundaries",
+  result.status === 200 &&
+    JSON.stringify(capturedRawText) ===
+      JSON.stringify(["first cue", "second cue"]) &&
+    result.json.choices?.[0]?.message?.content.includes("%%"),
+  JSON.stringify({
+    status: result.status,
+    rawText: capturedRawText,
+    content: result.json?.choices?.[0]?.message?.content,
+  }),
+);
+
+capturedRawText = undefined;
+globalThis.fetch = async (_url, init) => {
+  const body = JSON.parse(init.body);
+  capturedRawText = body.raw_text;
+  return upstream(
+    body.raw_text.map((text, index) => ({
+      index,
+      res: `T[${text}]`,
+    })),
+  );
+};
+result = await call(
+  "Translate into Chinese:\nfirst cue\nline two\n\n%%\n\nsecond cue",
+  { headers: { "x-doubao-context-mode": "subtitle-context" } },
+);
+check(
+  "subtitle-context mode sends one context group and preserves separators",
+  result.status === 200 &&
+    JSON.stringify(capturedRawText) ===
+      JSON.stringify(["first cue\nline two\n\n%%\n\nsecond cue"]),
+  JSON.stringify({ status: result.status, rawText: capturedRawText }),
+);
+
+calls = 0;
+globalThis.fetch = async () => {
+  calls += 1;
+  return upstream([{ index: 0, res: "unused" }]);
+};
+result = await call(
+  `Translate into Chinese:\n${"a".repeat(10001)}`,
+  { headers: { "x-doubao-context-mode": "subtitle" } },
+);
+check(
+  "subtitle mode rejects a cue over 10,000 characters before upstream",
+  result.status === 413 &&
+    result.json?.error?.code === "request_too_large" &&
+    calls === 0,
+  JSON.stringify({ status: result.status, calls, body: result.json }),
+);
+
+result = await call(
+  `Translate into Chinese:\n${"a".repeat(10001)}`,
+  { headers: { "x-doubao-context-mode": "subtitle-context" } },
+);
+check(
+  "subtitle-context mode rejects a context group over 10,000 characters before upstream",
+  result.status === 413 &&
+    result.json?.error?.code === "request_too_large" &&
+    calls === 0,
+  JSON.stringify({ status: result.status, calls, body: result.json }),
+);
+
+calls = 0;
+globalThis.fetch = async () => {
+  calls += 1;
+  return upstream([{ index: 0, res: "unused" }]);
+};
+result = await call("Translate into Chinese:\nhello", {
+  headers: { "x-doubao-context-mode": "unknown" },
+});
+check(
+  "invalid context mode is rejected before upstream",
+  result.status === 400 &&
+    result.json?.error?.code === "invalid_request" &&
+    calls === 0,
+  JSON.stringify({ status: result.status, calls, body: result.json }),
+);
+
 globalThis.fetch = originalFetch;
 await new Promise((resolve) => setTimeout(resolve, 20));
 check(

@@ -1,4 +1,4 @@
-var S=new TextEncoder,E={"access-control-allow-origin":"*","access-control-allow-methods":"POST, GET, OPTIONS","access-control-allow-headers":"authorization, content-type, x-api-key, x-doubao-target-lang, x-doubao-scene","access-control-expose-headers":"retry-after, x-request-id"};function t(e,r,i=400,h){throw[e,r,i,h]}function z(e,r=200){return new Response(JSON.stringify(e),{status:r,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}})}function A(e){return!!e&&typeof e=="object"&&!Array.isArray(e)}function x(e,r=!1){let i;try{i=JSON.parse(e)}catch{}return A(i)||t("Invalid JSON object.",r?"upstream_stream_error":"invalid_request",r?502:400),i}async function v(e,r,i=!1){let o=e.body?.getReader();if(!o)return"";let n=new TextDecoder,l="",c=0;try{for(;;){let u=await o.read();if(u.done)return l+n.decode();c+=u.value.byteLength,c>r&&t("Body is too large.",i?"upstream_stream_error":"request_too_large",i?502:413),l+=n.decode(u.value,{stream:!0})}}finally{await o.cancel().catch(()=>{}),o.releaseLock()}}var j={"traditional chinese":"zh-Hant","simplified chinese":"zh","chinese":"zh","繁体中文":"zh-Hant","繁體中文":"zh-Hant","简体中文":"zh","中文":"zh","english":"en","英文":"en","英语":"en","japanese":"ja","日文":"ja","日语":"ja","korean":"ko","韩文":"ko","韩语":"ko","french":"fr","german":"de","spanish":"es","portuguese":"pt","russian":"ru","arabic":"ar","italian":"it","indonesian":"id","malay":"ms","thai":"th","vietnamese":"vi","filipino":"fil","tagalog":"fil","uzbek":"uz","zh-cn":"zh","zh-hans":"zh","zh-tw":"zh-Hant","zh-hk":"zh-Hant","simplified mandarin chinese":"zh","traditional mandarin chinese":"zh-Hant","cantonese":"zh","standard arabic":"ar","bengali":"bn","hindi":"hi","javanese (javanese)":"jv","javanese":"jv","telugu":"te","marathi":"mr","tamil":"ta","turkish":"tr","urdu":"ur","gujarati":"gu","polish":"pl","ukrainian":"uk","kannada":"kn","malayalam":"ml","iranian persian":"fa","burmese":"my","swahili (individual language)":"sw","swahili":"sw","sundanese":"su","romanian":"ro","panjabi":"pa","amharic":"am","hausa":"ha","nigerian fulfulde":"ff","bosnian (cyrillic)":"bs","bosnian":"bs","croatian":"hr","dutch":"nl","serbian (cyrillic)":"sr","serbian":"sr","central kurdish":"ku","yoruba":"yo","northern uzbek (cyrillic)":"uz","northern uzbek":"uz","malay (individual language) (arabic)":"ms","igbo":"ig","nepali (individual language)":"ne","nepali":"ne","hungarian":"hu","north azerbaijani (cyrillic)":"az","north azerbaijani":"az","sinhala":"si","modern greek (1453-)":"el","modern greek":"el","czech":"cs","belarusian":"be","nyanja":"ny","kinyarwanda":"rw","zulu":"zu","bulgarian":"bg","swedish":"sv","lingala":"ln","somali":"so","kazakh":"kk","hebrew":"he","norwegian bokmål":"nb","norwegian nynorsk":"nn","afrikaans":"af","albanian":"sq","assamese":"as","basque":"eu","breton":"br","catalan":"ca","corsican":"co","welsh":"cy","danish":"da","divehi":"dv","esperanto":"eo","estonian":"et","faroese":"fo","fijian":"fj","finnish":"fi","western frisian":"fy","scottish gaelic":"gd","irish":"ga","galician":"gl","guarani":"gn","haitian creole":"ht","armenian":"hy","ido":"io","interlingua":"ia","icelandic":"is","georgian":"ka","khmer":"km","kyrgyz":"ky","lao":"lo","latin":"la","latvian":"lv","lithuanian":"lt","luxembourgish":"lb","macedonian":"mk","maltese":"mt","mongolian":"mn","maori":"mi","occitan":"oc","odia":"or","oromo":"om","sanskrit":"sa","slovak":"sk","slovenian":"sl","samoan":"sm","shona":"sn","sindhi":"sd","southern sotho":"st","tahitian":"ty","tatar":"tt","tajik":"tg","tigrinya":"ti","tongan":"to","tswana":"tn","turkmen":"tk","uyghur":"ug","volapük":"vo","wolof":"wo","xhosa":"xh","eastern yiddish":"yi","akan":"ak","bambara":"bm","bislama":"bi","tibetan":"bo","chechen":"ce","chuvash":"cv","dzongkha":"dz","ewe":"ee","ganda":"lg","ossetian":"os","swati":"ss","venda":"ve","north ndebele":"nd","south ndebele":"nr","chamorro":"ch","marshallese":"mh"};var KNOWN_LANGS=["zh","zh-Hant","en","ja","ko","fr","de","es","es-ES","pt","ru","ar","it","id","ms","th","vi","fil","uz","bn","hi","jv","te","mr","ta","tr","ur","gu","pl","uk","kn","ml","fa","my","sw","su","ro","pa","am","ha","ff","bs","hr","nl","sr","ku","yo","ig","ne","hu","az","si","el","cs","be","ny","rw","zu","bg","sv","ln","so","kk","he","nb","nn","af","sq","as","eu","br","ca","co","cy","da","dv","eo","et","fo","fj","fi","fy","gd","ga","gl","gn","ht","hy","io","ia","is","ka","km","ky","lo","la","lv","lt","lb","mk","mt","mn","mi","oc","or","om","sa","sk","sl","sm","sn","sd","st","ty","tt","tg","ti","to","tn","tk","ug","vo","wo","xh","yi","ak","bm","bi","bo","ce","cv","dz","ee","lg","os","ss","ve","nd","nr","ch","mh"];
+var S=new TextEncoder,E={"access-control-allow-origin":"*","access-control-allow-methods":"POST, GET, OPTIONS","access-control-allow-headers":"authorization, content-type, x-api-key, x-doubao-target-lang, x-doubao-scene, x-doubao-context-mode","access-control-expose-headers":"retry-after, x-request-id"};function t(e,r,i=400,h){throw[e,r,i,h]}function z(e,r=200){return new Response(JSON.stringify(e),{status:r,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}})}function A(e){return!!e&&typeof e=="object"&&!Array.isArray(e)}function x(e,r=!1){let i;try{i=JSON.parse(e)}catch{}return A(i)||t("Invalid JSON object.",r?"upstream_stream_error":"invalid_request",r?502:400),i}async function v(e,r,i=!1){let o=e.body?.getReader();if(!o)return"";let n=new TextDecoder,l="",c=0;try{for(;;){let u=await o.read();if(u.done)return l+n.decode();c+=u.value.byteLength,c>r&&t("Body is too large.",i?"upstream_stream_error":"request_too_large",i?502:413),l+=n.decode(u.value,{stream:!0})}}finally{await o.cancel().catch(()=>{}),o.releaseLock()}}var j={"traditional chinese":"zh-Hant","simplified chinese":"zh","chinese":"zh","繁体中文":"zh-Hant","繁體中文":"zh-Hant","简体中文":"zh","中文":"zh","english":"en","英文":"en","英语":"en","japanese":"ja","日文":"ja","日语":"ja","korean":"ko","韩文":"ko","韩语":"ko","french":"fr","german":"de","spanish":"es","portuguese":"pt","russian":"ru","arabic":"ar","italian":"it","indonesian":"id","malay":"ms","thai":"th","vietnamese":"vi","filipino":"fil","tagalog":"fil","uzbek":"uz","zh-cn":"zh","zh-hans":"zh","zh-tw":"zh-Hant","zh-hk":"zh-Hant","simplified mandarin chinese":"zh","traditional mandarin chinese":"zh-Hant","cantonese":"zh","standard arabic":"ar","bengali":"bn","hindi":"hi","javanese (javanese)":"jv","javanese":"jv","telugu":"te","marathi":"mr","tamil":"ta","turkish":"tr","urdu":"ur","gujarati":"gu","polish":"pl","ukrainian":"uk","kannada":"kn","malayalam":"ml","iranian persian":"fa","burmese":"my","swahili (individual language)":"sw","swahili":"sw","sundanese":"su","romanian":"ro","panjabi":"pa","amharic":"am","hausa":"ha","nigerian fulfulde":"ff","bosnian (cyrillic)":"bs","bosnian":"bs","croatian":"hr","dutch":"nl","serbian (cyrillic)":"sr","serbian":"sr","central kurdish":"ku","yoruba":"yo","northern uzbek (cyrillic)":"uz","northern uzbek":"uz","malay (individual language) (arabic)":"ms","igbo":"ig","nepali (individual language)":"ne","nepali":"ne","hungarian":"hu","north azerbaijani (cyrillic)":"az","north azerbaijani":"az","sinhala":"si","modern greek (1453-)":"el","modern greek":"el","czech":"cs","belarusian":"be","nyanja":"ny","kinyarwanda":"rw","zulu":"zu","bulgarian":"bg","swedish":"sv","lingala":"ln","somali":"so","kazakh":"kk","hebrew":"he","norwegian bokmål":"nb","norwegian nynorsk":"nn","afrikaans":"af","albanian":"sq","assamese":"as","basque":"eu","breton":"br","catalan":"ca","corsican":"co","welsh":"cy","danish":"da","divehi":"dv","esperanto":"eo","estonian":"et","faroese":"fo","fijian":"fj","finnish":"fi","western frisian":"fy","scottish gaelic":"gd","irish":"ga","galician":"gl","guarani":"gn","haitian creole":"ht","armenian":"hy","ido":"io","interlingua":"ia","icelandic":"is","georgian":"ka","khmer":"km","kyrgyz":"ky","lao":"lo","latin":"la","latvian":"lv","lithuanian":"lt","luxembourgish":"lb","macedonian":"mk","maltese":"mt","mongolian":"mn","maori":"mi","occitan":"oc","odia":"or","oromo":"om","sanskrit":"sa","slovak":"sk","slovenian":"sl","samoan":"sm","shona":"sn","sindhi":"sd","southern sotho":"st","tahitian":"ty","tatar":"tt","tajik":"tg","tigrinya":"ti","tongan":"to","tswana":"tn","turkmen":"tk","uyghur":"ug","volapük":"vo","wolof":"wo","xhosa":"xh","eastern yiddish":"yi","akan":"ak","bambara":"bm","bislama":"bi","tibetan":"bo","chechen":"ce","chuvash":"cv","dzongkha":"dz","ewe":"ee","ganda":"lg","ossetian":"os","swati":"ss","venda":"ve","north ndebele":"nd","south ndebele":"nr","chamorro":"ch","marshallese":"mh"};var KNOWN_LANGS=["zh","zh-Hant","en","ja","ko","fr","de","es","es-ES","pt","ru","ar","it","id","ms","th","vi","fil","uz","bn","hi","jv","te","mr","ta","tr","ur","gu","pl","uk","kn","ml","fa","my","sw","su","ro","pa","am","ha","ff","bs","hr","nl","sr","ku","yo","ig","ne","hu","az","si","el","cs","be","ny","rw","zu","bg","sv","ln","so","kk","he","nb","nn","af","sq","as","eu","br","ca","co","cy","da","dv","eo","et","fo","fj","fi","fy","gd","ga","gl","gn","ht","hy","io","ia","is","ka","km","ky","lo","la","lv","lt","lb","mk","mt","mn","mi","oc","or","om","sa","sk","sl","sm","sn","sd","st","ty","tt","tg","ti","to","tn","tk","ug","vo","wo","xh","yi","ak","bm","bi","bo","ce","cv","dz","ee","lg","os","ss","ve","nd","nr","ch","mh"];
 function normalizeRegionCode(e,r){
   // e is already lowercased, "_"->"-", parens stripped, spaces collapsed.
   let i=e.indexOf("-");
@@ -84,6 +84,96 @@ function stripInstruction(content) {
   }
 
   return { instruction: "", body: content };
+}
+
+function resolveContextMode(request) {
+  const header = request.headers.get("x-doubao-context-mode");
+  if (header === null || header.trim() === "") {
+    return { mode: "default" };
+  }
+  const mode = header.trim().toLowerCase();
+  if (
+    mode !== "default" &&
+    mode !== "subtitle" &&
+    mode !== "subtitle-context"
+  ) {
+    t(
+      "x-doubao-context-mode must be default, subtitle, or subtitle-context.",
+      "invalid_request",
+    );
+  }
+  return { mode };
+}
+
+function splitTranslationUnits(text, { mode }) {
+  if (mode === "subtitle-context") {
+    const unit = text.trim();
+    if (unit.length > 10000) {
+      t(
+        "A subtitle context group exceeds 10,000 characters.",
+        "request_too_large",
+        413,
+      );
+    }
+    return [{ text: unit, separator: "" }];
+  }
+
+  const body = text;
+  const parts = body.split(/((?:\r\n|\r|\n)+)/);
+  const segments = [];
+  for (let index = 0; index < parts.length; index += 2) {
+    const line = parts[index] ?? "";
+    const separator = parts[index + 1] ?? "";
+    if (!line.trim() || /^[ \t]*%%[ \t]*$/.test(line)) {
+      segments.push({
+        text: "",
+        separator: line + separator,
+        boundary: /^[ \t]*%%[ \t]*$/.test(line),
+      });
+    } else {
+      if (line.length > 10000) {
+        t("One line exceeds 10,000 characters.", "request_too_large", 413);
+      }
+      segments.push({ text: line, separator });
+    }
+  }
+
+  if (mode === "subtitle") {
+    const units = [];
+    let pending = null;
+    for (const segment of segments) {
+      if (!segment.text) {
+        // In subtitle mode only %% is a cue boundary. Blank lines and single
+        // line breaks inside a cue stay part of that cue's context.
+        if (segment.boundary) {
+          pending = null;
+          units.push(segment);
+        } else if (pending) {
+          pending.separator += segment.separator;
+        } else {
+          units.push(segment);
+        }
+        continue;
+      }
+      if (pending) {
+        pending.text += "\n" + segment.text;
+        if (pending.text.length > 10000) {
+          t(
+            "One subtitle cue exceeds 10,000 characters.",
+            "request_too_large",
+            413,
+          );
+        }
+        pending.separator = segment.separator;
+      } else {
+        pending = { ...segment };
+        units.push(pending);
+      }
+    }
+    return units;
+  }
+
+  return segments;
 }
 
 function resolveConcurrency(env) {
@@ -409,20 +499,8 @@ function parseTranslationRequest(body, request, env) {
     );
   }
 
-  const parts = text.split(/((?:\r\n|\r|\n)+)/);
-  const segments = [];
-  for (let index = 0; index < parts.length; index += 2) {
-    const line = parts[index] ?? "";
-    const separator = parts[index + 1] ?? "";
-    if (!line.trim() || /^[ \t]*%%[ \t]*$/.test(line)) {
-      segments.push({ text: "", separator: line + separator });
-    } else {
-      if (line.length > 10000) {
-        t("One line exceeds 10,000 characters.", "request_too_large", 413);
-      }
-      segments.push({ text: line, separator });
-    }
-  }
+  const contextMode = resolveContextMode(request);
+  const segments = splitTranslationUnits(text, contextMode);
 
   const lines = segments.filter((segment) => segment.text).map((segment) => segment.text);
   if (!lines.length) {
