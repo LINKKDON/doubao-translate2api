@@ -176,7 +176,7 @@ Second line
 
 ### `subtitle`
 
-用于客户端已经按字幕条组织请求的场景。单条字幕内部的换行会合并进同一个翻译单元；**独立一行的 `%%` 才是字幕边界**，普通空行不会切断字幕。
+用于客户端已经按字幕条组织请求的场景。**独立一行的 `%%` 才是字幕边界**，普通空行不会切断字幕；相邻两条字幕之间可以有多个空行，依然只在 `%%` 处切开。
 
 ```text
 Translate to Chinese:
@@ -188,14 +188,14 @@ Translate to Chinese:
 第二条字幕
 ```
 
-上游收到两个翻译单元：
+上游收到两个翻译单元，每条字幕的原文（包括内部换行、CRLF、行尾空白和多余空行）按原样发送，不做归一化：
 
 ```text
 第一条字幕的第一行
 第一条字幕的第二行
 ```
 
-以及 `第二条字幕`。客户端必须自行把返回结果按 `%%` 拆回各条字幕。
+以及 `第二条字幕`。Worker 回填译文时同样按原文保留 `%%` 前后的空行与换行风格，因此客户端只需按 `%%` 拆回各条字幕。
 
 ### `subtitle-context`
 
@@ -209,7 +209,7 @@ Translate to Chinese:
 下一句字幕
 ```
 
-该模式只有一个上游翻译单元，整个正文最多 10,000 字符。客户端仍应校验返回结果是否保留了预期的字幕分隔结构；如果无法拆分，应回退到逐条翻译或缓存中的旧译文。
+该模式只有一个上游翻译单元，整个正文最多 10,000 字符，并保留指令换行之外的正文首尾空白。Worker 会校验上游返回的独立 `%%` 分隔符数量；数量不一致时返回 `502 upstream_stream_error`，避免字幕错位。客户端仍应校验拆分后的条数与内容，失败时回退到逐条翻译或缓存中的旧译文。
 
 ### 客户端兼容性
 
@@ -248,8 +248,10 @@ Translate to Chinese:
 | `404` | `model_not_found` | 使用了 `doubao-ai` 以外的模型 |
 | `413` | `request_too_large` | 超过请求体、正文、批次或单条字幕限制 |
 | `429` | `upstream_rate_limit` | 豆包上游限流 |
+| `499` | `request_cancelled` | 客户端在翻译完成前断开连接 |
 | `502` | `upstream_http_error` / `upstream_network_error` | 上游 HTTP 或网络失败 |
 | `502` | `upstream_incomplete_result` | 上游没有返回完整索引 |
+| `502` | `upstream_stream_error` | 上游流格式错误，或字幕分隔结构未被保留 |
 | `503` | `configuration_error` | Secret 或可选配置不合法 |
 | `504` | `upstream_timeout` | 上游超时 |
 
@@ -260,8 +262,10 @@ Translate to Chinese:
 - 上游 `429` 带合法 `Retry-After` 时：原样透传该响应头。
 - 上游 SSE 没有发送 `[DONE]`：只要所有输入索引都有非空译文，仍视为成功。
 - SSE 缺少索引或存在非法结果：返回 `502 upstream_incomplete_result` 或 `502 upstream_stream_error`。
+- 上游超时（45 秒单批次 / 90 秒整体）：不重试，返回 `504 upstream_timeout`。
+- 客户端主动断开：返回 `499 request_cancelled`，不会与上游超时混淆。
 
-所有响应都会带 `x-request-id`。CORS 允许并暴露 `retry-after` 与 `x-request-id`。`Retry-After` 只接受长度不超过 128 且不含换行的值。
+所有响应都会带 `x-request-id`。CORS 允许并暴露 `retry-after` 与 `x-request-id`。`Retry-After` 仅透传秒数或可解析的 HTTP-date，不转发其他任意字符串。
 
 ## 提示词与内容限制
 
@@ -302,10 +306,10 @@ npm run dev
 2. `node test-hardening.mjs`：运行回归测试
 3. `node check-size.mjs`：检查 Worker 体积不超过 32,000 字节
 
-本地测试使用模拟上游，覆盖目标语言解析、CORS、429 / `Retry-After`、`5xx` 和网络重试、SSE 完整性、批次并发顺序、字幕拆分模式及 400 / 413 边界。它**不能替代真实账号、真实 Cookie 和真实豆包上游的联调**；部署后请用自己的客户端做一次端到端验收。
+本地测试使用模拟上游，覆盖目标语言解析、CORS、429 / `Retry-After`（含非法值与 HTTP-date）、`5xx` 和网络重试、超时与客户端取消的错误归因、SSE 完整性、批次并发顺序、字幕拆分与上下文模式（含 CRLF、连续空行、首尾空白、分隔符数量不符）及 400 / 413 边界。它**不能替代真实账号、真实 Cookie 和真实豆包上游的联调**；部署后请用自己的客户端做一次端到端验收。
 
 ## 版本与许可
 
-当前版本：`0.2.1`。本次主要新增字幕上下文模式、429 限流语义、`Retry-After` 透传、5xx / 网络重试、无 `[DONE]` 的完整索引兼容，以及省略冒号的翻译指令解析。完整历史见 [CHANGELOG.md](CHANGELOG.md)。
+当前版本：`0.2.1`。本次主要新增字幕上下文模式、逐条字幕的原文保留、429 限流语义、`Retry-After` 透传、5xx / 网络重试、超时与客户端取消的区分、无 `[DONE]` 的完整索引兼容，以及省略冒号的翻译指令解析。完整历史见 [CHANGELOG.md](CHANGELOG.md)。
 
 MIT License，见 [LICENSE](LICENSE)。

@@ -54,7 +54,14 @@ function targetLang(value) {
   return normalized;
 }
 
-function stripInstruction(content) {
+function stripInstruction(content, mode) {
+  const bodyStart = (prefix) =>
+    content
+      .slice(prefix.length)
+      .replace(
+        mode === "default" ? /^(?:\r\n|\r|\n)+/ : /^(?:\r\n|\r|\n)/,
+        "",
+      );
   const colonMatch =
     content.match(/^(?:please\s+)?translate[^\n:：]{1,160}[:：][ \t]*/i) ??
     content.match(/^(?:请)?翻译(?:成|为)[^\n:：]{1,80}[:：][ \t]*/);
@@ -62,9 +69,7 @@ function stripInstruction(content) {
   if (colonMatch) {
     return {
       instruction: colonMatch[0],
-      body: content
-        .slice(colonMatch[0].length)
-        .replace(/^(?:\r\n|\r|\n)+/, ""),
+      body: bodyStart(colonMatch[0]),
     };
   }
 
@@ -79,7 +84,7 @@ function stripInstruction(content) {
   if (newlineDirective) {
     return {
       instruction: firstLine,
-      body: content.slice(firstLine.length).replace(/^(?:\r\n|\r|\n)+/, ""),
+      body: bodyStart(firstLine),
     };
   }
 
@@ -107,15 +112,36 @@ function resolveContextMode(request) {
 
 function splitTranslationUnits(text, { mode }) {
   if (mode === "subtitle-context") {
-    const unit = text.trim();
-    if (unit.length > 10000) {
+    if (text.length > 10000) {
       t(
         "A subtitle context group exceeds 10,000 characters.",
         "request_too_large",
         413,
       );
     }
-    return [{ text: unit, separator: "" }];
+    return [{ text, separator: "" }];
+  }
+
+  if (mode === "subtitle") {
+    // Keep each cue verbatim. Only a standalone %% line is a boundary;
+    // everything between boundaries, including blank lines, stays intact.
+    const parts = text.split(
+      /((?:\r\n|\r|\n)+[ \t]*%%[ \t]*(?:(?:\r\n|\r|\n)+|$))/,
+    );
+    const units = [];
+    for (let index = 0; index < parts.length; index += 2) {
+      const cue = parts[index] ?? "";
+      const separator = parts[index + 1] ?? "";
+      if (cue.length > 10000) {
+        t("One subtitle cue exceeds 10,000 characters.", "request_too_large", 413);
+      }
+      units.push(
+        cue.trim()
+          ? { text: cue, separator }
+          : { text: "", separator: cue + separator },
+      );
+    }
+    return units;
   }
 
   const body = text;
@@ -138,42 +164,12 @@ function splitTranslationUnits(text, { mode }) {
     }
   }
 
-  if (mode === "subtitle") {
-    const units = [];
-    let pending = null;
-    for (const segment of segments) {
-      if (!segment.text) {
-        // In subtitle mode only %% is a cue boundary. Blank lines and single
-        // line breaks inside a cue stay part of that cue's context.
-        if (segment.boundary) {
-          pending = null;
-          units.push(segment);
-        } else if (pending) {
-          pending.separator += segment.separator;
-        } else {
-          units.push(segment);
-        }
-        continue;
-      }
-      if (pending) {
-        pending.text += "\n" + segment.text;
-        if (pending.text.length > 10000) {
-          t(
-            "One subtitle cue exceeds 10,000 characters.",
-            "request_too_large",
-            413,
-          );
-        }
-        pending.separator = segment.separator;
-      } else {
-        pending = { ...segment };
-        units.push(pending);
-      }
-    }
-    return units;
-  }
-
   return segments;
+}
+
+function countSubtitleBoundaries(text) {
+  return (text.match(/(?:^|\r\n|\r|\n)[ \t]*%%[ \t]*(?=\r\n|\r|\n|$)/g) ?? [])
+    .length;
 }
 
 function resolveConcurrency(env) {
@@ -247,7 +243,12 @@ function parseUpstreamJson(text) {
 
 function retryAfterHeader(value) {
   const trimmed = value?.trim();
-  return trimmed && trimmed.length <= 128 && !/[\r\n]/.test(trimmed)
+  return trimmed &&
+    trimmed.length <= 128 &&
+    (/^\d+$/.test(trimmed) ||
+      /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/i.test(
+        trimmed,
+      ))
     ? { "retry-after": trimmed }
     : undefined;
 }
@@ -274,7 +275,15 @@ function delayWithAbort(ms, signal) {
   });
 }
 
-async function translateBatch(rawText, target, cookie, signal, scene) {
+async function translateBatch(
+  rawText,
+  target,
+  cookie,
+  signal,
+  scene,
+  contextMode,
+  requestSignal,
+) {
   let retried = false;
 
   for (;;) {
@@ -412,19 +421,45 @@ async function translateBatch(rawText, target, cookie, signal, scene) {
           502,
         );
       }
+      if (
+        contextMode === "subtitle-context" &&
+        countSubtitleBoundaries(translations.get(0) ?? "") !==
+          countSubtitleBoundaries(rawText[0])
+      ) {
+        t(
+          "Upstream did not preserve subtitle boundaries.",
+          "upstream_stream_error",
+          502,
+        );
+      }
       return rawText.map((_, index) => translations.get(index));
     } catch (error) {
       if (Array.isArray(error)) throw error;
-      if (!retried && !signal?.aborted) {
+      const timedOut =
+        signal?.aborted && !requestSignal?.aborted ||
+        error?.name === "TimeoutError";
+      if (timedOut) {
+        t("Doubao request timed out.", "upstream_timeout", 504);
+      }
+      if (requestSignal?.aborted) {
+        t("Request was cancelled.", "request_cancelled", 499);
+      }
+      if (!retried) {
         retried = true;
         try {
           await delayWithAbort(randomBackoff(), signal);
         } catch {
+          if (requestSignal?.aborted) {
+            t("Request was cancelled.", "request_cancelled", 499);
+          }
           t("Doubao request timed out.", "upstream_timeout", 504);
         }
         continue;
       }
       if (signal?.aborted) {
+        if (requestSignal?.aborted) {
+          t("Request was cancelled.", "request_cancelled", 499);
+        }
         t("Doubao request timed out.", "upstream_timeout", 504);
       }
       t("Doubao connection failed.", "upstream_network_error", 502);
@@ -443,7 +478,11 @@ function parseTranslationRequest(body, request, env) {
     t("A plain-text user message is required.", "unsupported_input");
   }
 
-  const { instruction, body: text } = stripInstruction(user.content);
+  const contextMode = resolveContextMode(request);
+  const { instruction, body: text } = stripInstruction(
+    user.content,
+    contextMode.mode,
+  );
   const systemTexts = messages
     .filter(
       (message) =>
@@ -499,7 +538,6 @@ function parseTranslationRequest(body, request, env) {
     );
   }
 
-  const contextMode = resolveContextMode(request);
   const segments = splitTranslationUnits(text, contextMode);
 
   const lines = segments.filter((segment) => segment.text).map((segment) => segment.text);
@@ -528,7 +566,7 @@ function parseTranslationRequest(body, request, env) {
     );
   }
 
-  return { target, segments, batches };
+  return { target, segments, batches, contextMode };
 }
 
 async function handleRequest(request, env, requestId) {
@@ -592,7 +630,7 @@ async function handleRequest(request, env, requestId) {
   }
 
   const scene = resolveScene(request, env);
-  const { target, segments, batches } = parseTranslationRequest(
+  const { target, segments, batches, contextMode } = parseTranslationRequest(
     body,
     request,
     env,
@@ -617,6 +655,8 @@ async function handleRequest(request, env, requestId) {
               AbortSignal.timeout(45000),
             ]),
             scene,
+            contextMode.mode,
+            request.signal,
           ),
         ),
     );

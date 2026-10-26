@@ -330,6 +330,7 @@ check(
 );
 
 let capturedRawText;
+let preservedRawText;
 globalThis.fetch = async (_url, init) => {
   const body = JSON.parse(init.body);
   capturedRawText = body.raw_text;
@@ -356,9 +357,9 @@ globalThis.fetch = async (_url, init) => {
   const body = JSON.parse(init.body);
   capturedRawText = body.raw_text;
   return upstream(
-    body.raw_text.map((text, index) => ({
+    body.raw_text.map((rawText, index) => ({
       index,
-      res: `T[${text}]`,
+      res: `T[${rawText}]`,
     })),
   );
 };
@@ -377,10 +378,11 @@ capturedRawText = undefined;
 globalThis.fetch = async (_url, init) => {
   const body = JSON.parse(init.body);
   capturedRawText = body.raw_text;
+  preservedRawText = body.raw_text;
   return upstream(
     body.raw_text.map((text, index) => ({
       index,
-      res: `T[${text}]`,
+      res: text,
     })),
   );
 };
@@ -405,10 +407,11 @@ capturedRawText = undefined;
 globalThis.fetch = async (_url, init) => {
   const body = JSON.parse(init.body);
   capturedRawText = body.raw_text;
+  preservedRawText = body.raw_text;
   return upstream(
     body.raw_text.map((text, index) => ({
       index,
-      res: `T[${text}]`,
+      res: text,
     })),
   );
 };
@@ -468,6 +471,135 @@ check(
     calls === 0,
   JSON.stringify({ status: result.status, calls, body: result.json }),
 );
+
+const contextEchoFetch = async (_url, init) => {
+  const body = JSON.parse(init.body);
+  preservedRawText = body.raw_text;
+  return upstream(body.raw_text.map((text, index) => ({ index, res: text })));
+};
+
+globalThis.fetch = contextEchoFetch;
+const crlfCue = "Translate to Chinese:\r\nfirst\r\nsecond\r\n\r\n%%\r\n\r\nthird";
+result = await call(crlfCue, {
+  headers: { "x-doubao-context-mode": "subtitle" },
+});
+check(
+  "subtitle mode preserves CRLF and cue separators verbatim",
+  result.status === 200 &&
+    JSON.stringify(preservedRawText) ===
+      JSON.stringify(["first\r\nsecond", "third"]) &&
+    result.json.choices?.[0]?.message?.content ===
+      "first\r\nsecond\r\n\r\n%%\r\n\r\nthird",
+  JSON.stringify({ status: result.status, rawText: preservedRawText, body: result.json, expected: ["first\r\nsecond", "third"] }),
+);
+
+const spacedCue = "Translate to Chinese:\nfirst\n\n\n\nsecond";
+result = await call(spacedCue, {
+  headers: { "x-doubao-context-mode": "subtitle" },
+});
+check(
+  "subtitle mode preserves consecutive blank lines",
+  result.status === 200 &&
+    result.json.choices?.[0]?.message?.content === "first\n\n\n\nsecond",
+  JSON.stringify({ status: result.status, body: result.json }),
+);
+
+const paddedContext = "Translate to Chinese:\n\nfirst\n\n%%\n\nsecond\n\n";
+result = await call(paddedContext, {
+  headers: { "x-doubao-context-mode": "subtitle-context" },
+});
+check(
+  "subtitle-context preserves leading and trailing whitespace",
+  result.status === 200 &&
+    result.json.choices?.[0]?.message?.content === "\nfirst\n\n%%\n\nsecond\n\n",
+  JSON.stringify({ status: result.status, body: result.json }),
+);
+
+globalThis.fetch = async () =>
+  upstream([{ index: 0, res: "first\n\nsecond" }]);
+result = await call("Translate to Chinese:\nfirst\n\n%%\n\nsecond", {
+  headers: { "x-doubao-context-mode": "subtitle-context" },
+});
+check(
+  "subtitle-context rejects a missing upstream separator",
+  result.status === 502 &&
+    result.json?.error?.code === "upstream_stream_error",
+  JSON.stringify({ status: result.status, body: result.json }),
+);
+
+globalThis.fetch = async () =>
+  new Response("limited", {
+    status: 429,
+    headers: { "retry-after": "not-a-valid-retry-after" },
+  });
+result = await call("Translate to Chinese:\nhello");
+check(
+  "invalid Retry-After is not propagated",
+  result.status === 429 && result.headers.get("retry-after") === null,
+  JSON.stringify({ status: result.status, headers: Object.fromEntries(result.headers) }),
+);
+
+globalThis.fetch = async () =>
+  new Response("limited", {
+    status: 429,
+    headers: { "retry-after": "Wed, 21 Oct 2026 07:28:00 GMT" },
+  });
+result = await call("Translate to Chinese:\nhello");
+check(
+  "HTTP-date Retry-After is propagated",
+  result.status === 429 &&
+    result.headers.get("retry-after") === "Wed, 21 Oct 2026 07:28:00 GMT",
+  JSON.stringify({ status: result.status, headers: Object.fromEntries(result.headers) }),
+);
+
+calls = 0;
+globalThis.fetch = async (_url, init) => {
+  calls += 1;
+  const error = new Error("aborted");
+  error.name = "AbortError";
+  throw error;
+};
+const controller = new AbortController();
+controller.abort();
+const cancelledRequest = new Request("https://worker.example/v1/chat/completions", {
+  method: "POST",
+  signal: controller.signal,
+  headers: {
+    authorization: `Bearer ${env.API_KEY}`,
+    "content-type": "application/json",
+  },
+  body: JSON.stringify({
+    messages: [{ role: "user", content: "Translate to Chinese:\nhello" }],
+  }),
+});
+const cancelledResponse = await worker.fetch(cancelledRequest, env);
+const cancelledBody = await cancelledResponse.json();
+check(
+  "client cancellation is not reported as an upstream timeout",
+  cancelledResponse.status === 499 &&
+    cancelledBody.error?.code === "request_cancelled",
+  JSON.stringify({ status: cancelledResponse.status, body: cancelledBody, calls }),
+);
+
+calls = 0;
+globalThis.fetch = async (_url, init) => {
+  calls += 1;
+  throw init.signal.reason;
+};
+const originalTimeout = AbortSignal.timeout;
+AbortSignal.timeout = () => AbortSignal.abort();
+try {
+  result = await call("Translate to Chinese:\nhello");
+  check(
+    "timeout abort is not retried or reported as a network error",
+    result.status === 504 &&
+      result.json?.error?.code === "upstream_timeout" &&
+      calls === 1,
+    JSON.stringify({ status: result.status, body: result.json, calls }),
+  );
+} finally {
+  AbortSignal.timeout = originalTimeout;
+}
 
 globalThis.fetch = originalFetch;
 await new Promise((resolve) => setTimeout(resolve, 20));

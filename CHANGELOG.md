@@ -4,13 +4,23 @@
 
 ## v0.2.1
 
+### 字幕模式
+
+- `subtitle` 不再把单条字幕内部的多行拆分或归一化：只把独立一行的 `%%` 当作字幕边界，普通空行、连续空行、CRLF 和正文首尾空白都原样保留并回填。
+- 新增 `subtitle-context` 上下文模式：整个正文作为一个上游翻译单元发送，保留 `%%` 结构，用于改善相邻字幕的上下文连贯性。
+- `subtitle-context` 会校验上游返回的独立 `%%` 分隔符数量，数量不一致时返回 `502 upstream_stream_error`，避免字幕错位。
+- `x-doubao-context-mode` 只接受 `default` / `subtitle` / `subtitle-context`，其他值返回 `400 invalid_request`。
+
 ### 稳定性与错误语义
 
 - 上游 `429` 改为 `rate_limit_error`，并透传合法的 `Retry-After`；CORS 暴露 `Retry-After` 与 `x-request-id`。
+- `Retry-After` 只透传纯秒数或标准 RFC 1123 HTTP-date，不再接受可被 `Date.parse` 误判的其他字符串（如 `7.5`）。
 - 上游 `5xx` 和网络异常增加 1 次随机退避重试（`200–399 ms`），仍失败时保持原有 `502` / `504` 语义。
+- 区分上游超时与客户端取消：上游超时返回 `504 upstream_timeout` 且不重试；客户端断开返回 `499 request_cancelled`，不再误报为超时。
 - SSE 在索引完整时不再强制要求 `[DONE]`；索引缺失仍返回 `502 upstream_incomplete_result`。
 - 翻译指令允许省略冒号，支持 `Translate to <语言>` 与 `翻译成<语言>` 的首行形式，并避免把指令送入翻译正文。
-- 新增 `test-hardening.mjs`（20 项）并接入 `npm run build`。
+- 新增 `test-hardening.mjs`（35 项）并接入 `npm run build`，覆盖字幕模式、`Retry-After`、重试、超时与取消归因。
+- 单文件 Worker 仍低于 32,000 字节上限（约 26.9 KB，gzip 约 8.8 KB）。
 
 ## v0.2.0
 
