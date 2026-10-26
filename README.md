@@ -1,12 +1,12 @@
 <div align="center">
 
-# 豆包翻译 Lite
+# 豆包翻译 2API
 
-**把豆包网页版的翻译能力封装成一个 Cloudflare Worker，直接喂给任何支持自定义 OpenAI Provider 的翻译插件。**
+**把豆包网页版的翻译能力封装成一个 Cloudflare Worker，喂给任何支持自定义 OpenAI Provider 的翻译插件。**
 
 非流式 · 纯文本 · 单文件 · 无状态 · MIT
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/LINKKDON/doubao-translate2api-lite)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/LINKKDON/doubao-translate2api)
 
 ![Node](https://img.shields.io/badge/Node.js-24-339933?style=flat-square&logo=nodedotjs&logoColor=white)
 ![Worker](https://img.shields.io/badge/worker.js-26.9%20KB-333333?style=flat-square)
@@ -23,14 +23,14 @@
 > [!WARNING]
 > **非官方项目**，与豆包、字节跳动没有隶属或合作关系。请只使用本人账号或已获授权的 Cookie；账号风控、Cookie 泄露、上游接口变更等风险自负。
 >
-> **它不是通用 LLM 网关**。上游只会翻译你发过去的正文：自定义提示词、术语表、多轮对话、工具调用、流式输出一律不生效。
+> **它不是通用 LLM 网关**。上游只接收「正文 + 目标语言」，自定义提示词、术语表、多轮对话、工具调用、流式输出一律不生效。
 
 | 适合 ✅ | 不适合 ❌ |
 | --- | --- |
-| 沉浸式翻译、陪读蛙等支持 OpenAI 兼容接口的翻译插件 | 需要提示词控制、术语表或自定义风格 |
-| 网页整页 / 视频字幕的批量翻译 | 多轮对话、function calling、流式返回 |
+| 沉浸式翻译、陪读蛙等支持 OpenAI 兼容接口的插件 | 需要提示词控制、术语表或自定义风格 |
+| 网页整页翻译、视频字幕批量翻译 | 多轮对话、function calling、流式返回 |
 
-**目录**　[快速开始](#quickstart) · [配置](#config) · [客户端接入](#client) · [字幕与上下文模式](#modes) · [接口参考](#api) · [限制与超时](#limits) · [错误与重试](#errors) · [安全与隐私](#security) · [本地开发](#local) · [排错速查](#troubleshoot) · [许可](#license)
+**目录**　[快速开始](#quickstart) · [配置](#config) · [客户端接入](#client) · [字幕与上下文](#modes) · [接口参考](#api) · [限制与超时](#limits) · [错误与重试](#errors) · [安全与隐私](#security) · [本地开发](#local) · [排错速查](#troubleshoot) · [许可](#license)
 
 ---
 
@@ -38,7 +38,7 @@
 
 ## 🚀 快速开始
 
-只有三件事：**部署 Worker** → **填两个变量** → **客户端填三个值**。
+四步：**部署 Worker** → **填两个变量** → **客户端填三个值** → **curl 自测**。
 
 ### 1 · 部署
 
@@ -48,7 +48,7 @@
 | **本地 Wrangler** | `npm ci` 然后 `npm run deploy` | 本机有 Node 24 |
 | **控制台粘贴** | 把 `worker.js` 整个贴进 Worker 编辑器保存 | 临时试一下 |
 
-构建命令 `npm run build`，部署命令 `npm run deploy`，Node.js 24。
+构建命令 `npm run build`，部署命令 `npm run deploy`，运行时 Node.js 24。
 
 ### 2 · 填两个必需变量
 
@@ -123,7 +123,7 @@ curl -s "https://<你的 Worker 域名>/v1/chat/completions" \
 | `API_KEY` | 至少 16 个字符，不含空白 | 客户端调用 Worker 时使用的 Bearer Token |
 | `DOUBAO_COOKIE` | 包含 `sessionid`、`sid_tt`、`uid_tt` | 豆包账号的 Cookie Header，可带 `Cookie:` 前缀 |
 
-缺失或格式不合法时会返回 `503 configuration_error`，响应 `message` 直接说明是哪一项。
+缺失或格式不合法时返回 `503 configuration_error`，响应 `message` 直接说明是哪一项。
 
 <details>
 <summary><b>明文变量还是 Secret？怎么切换</b></summary>
@@ -358,6 +358,8 @@ Hello world
 | `503` | `configuration_error` | 必需变量或可选变量不合法 |
 | `504` | `upstream_timeout` | 上游超时 |
 
+响应遵循 OpenAI 错误结构：`401` → `authentication_error`、其他 4xx → `invalid_request_error`、`429` → `rate_limit_error`、5xx → `api_error`，具体原因看 `code` 字段。
+
 </details>
 
 **重试规则**
@@ -396,6 +398,8 @@ Hello world
 ## 🛠️ 本地开发
 
 ```sh
+git clone https://github.com/LINKKDON/doubao-translate2api.git
+cd doubao-translate2api
 npm ci
 Copy-Item .dev.vars.example .dev.vars    # Windows PowerShell
 npm run build
