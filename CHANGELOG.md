@@ -22,6 +22,11 @@
 - 新增 `test-hardening.mjs`（35 项）并接入 `npm run build`，覆盖字幕模式、`Retry-After`、重试、超时与取消归因。
 - 单文件 Worker 仍低于 32,000 字节上限（约 26.9 KB，gzip 约 8.8 KB）。
 
+### 部署配置
+
+- `wrangler.jsonc` 不再声明 `secrets.required`，改为 `keep_vars: true`：`API_KEY` 与 `DOUBAO_COOKIE` 由 Cloudflare 面板以明文变量维护，构建部署时保留面板变量，不再被删除。
+- 说明：面板上已是明文变量时，配置里若仍保留 `secrets.required`，构建会以 `The following required secrets have not been set` 失败；README 已补充明文变量与 Secret 两种维护方式的取舍。
+
 ## v0.2.0
 
 ### 新增：请求内批次并发

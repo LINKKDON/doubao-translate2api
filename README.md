@@ -25,30 +25,33 @@
 
 1. 点击上方 **Deploy to Cloudflare**，登录 Cloudflare 并连接 GitHub。
 2. 按提示创建自己的仓库。构建命令为 `npm run build`，部署命令为 `npm run deploy`，Node.js 版本为 24。
-3. 配置两个 Secret：`API_KEY` 和 `DOUBAO_COOKIE`。
+3. 在 Worker 的 **设置 → 运行时变量和密钥** 里添加两个变量：`API_KEY` 和 `DOUBAO_COOKIE`（明文变量即可，本仓库 `wrangler.jsonc` 已开启 `keep_vars`，构建不会覆盖它们）。
 4. 部署完成后访问 `https://<你的 Worker 域名>/health`，确认返回 `{"status":"ok",...}`。
 
 ### Wrangler 部署
 
 ```sh
 npm ci
-npx wrangler secret put API_KEY
-npx wrangler secret put DOUBAO_COOKIE
 npm run deploy
 ```
+
+部署前必须先配置 `API_KEY` 与 `DOUBAO_COOKIE`（见下节）。本仓库默认用「面板明文变量 + `keep_vars`」维护：`wrangler deploy` 会保留面板上已有的明文变量。若更希望用 Secret，可执行 `npx wrangler secret put API_KEY` / `npx wrangler secret put DOUBAO_COOKIE`，并把 `"secrets": { "required": ["API_KEY", "DOUBAO_COOKIE"] }` 加回 `wrangler.jsonc`；否则下一次 `wrangler deploy` 会把这两个 Secret 直接删掉。
 
 `worker.js` 是可直接部署的完整入口，不依赖父目录。也可以把文件内容粘贴到 Cloudflare 控制台，但推荐使用 GitHub 或 Wrangler，便于保留版本记录。
 
 ## 配置
 
-### 必需 Secret
+### 必需变量
 
 | 名称 | 要求 | 说明 |
 | --- | --- | --- |
 | `API_KEY` | 至少 16 个字符，不能包含空白字符 | 客户端访问 Worker 时使用的 Bearer Token |
 | `DOUBAO_COOKIE` | 必须包含 `sessionid`、`sid_tt`、`uid_tt` | 本人豆包账号的 Cookie Header，可带 `Cookie:` 前缀 |
 
-Secret 缺失或格式不正确时，Worker 返回 `503 configuration_error`。不要把真实 Cookie 或 API Key 提交到仓库。
+- 推荐做法（本仓库当前配置）：在 Cloudflare 面板 **设置 → 运行时变量和密钥** 中把两者添加为**明文变量**，仓库里的 `keep_vars: true` 会在每次构建部署时保留它们。
+- 也可以改用 Secret：执行 `npx wrangler secret put API_KEY`，并把 `"secrets": { "required": ["API_KEY", "DOUBAO_COOKIE"] }` 加回 `wrangler.jsonc`。反过来，如果面板里是明文变量、配置里却仍写着 `secrets.required`，构建会因为 `The following required secrets have not been set` 直接失败。
+- 明文变量在 Cloudflare 面板、导出配置以及任何有账号访问权限的人面前都是可见的；Secret 写入后不可回读。按自己的取舍选择。
+- 变量缺失或格式不正确时，Worker 返回 `503 configuration_error`。不要把真实 Cookie 或 API Key 提交到仓库，本仓库是公开仓库。
 
 ### 可选变量
 
