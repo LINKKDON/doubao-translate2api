@@ -97,7 +97,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ```sh
 curl -s "https://<你的 Worker 域名>/health"
-# {"status":"ok","runtime":"cloudflare-workers-lite"}
+# {"status":"ok","runtime":"cloudflare-workers"}
 
 curl -s "https://<你的 Worker 域名>/v1/chat/completions" \
   -H "Authorization: Bearer <API_KEY>" \
@@ -446,7 +446,7 @@ npm run dev
 ## 📄 许可与致谢
 
 - 当前版本 `0.2.1`：字幕上下文模式、逐条字幕原文保留、`429` 限流语义与 `Retry-After` 透传、`5xx` / 网络重试、上游超时与客户端取消区分、允许缺少 `[DONE]` 的完整索引响应、省略冒号的翻译指令解析。完整历史见 [CHANGELOG.md](CHANGELOG.md)
-- 基于 [mu-zi-lee/doubao-translate2api](https://github.com/mu-zi-lee/doubao-translate2api) 的 `workers-lite` 版本独立维护
+- 基于 [mu-zi-lee/doubao-translate2api](https://github.com/mu-zi-lee/doubao-translate2api) 独立维护的 Cloudflare Worker 实现
 - MIT License，见 [LICENSE](LICENSE)
 
 <div align="center">

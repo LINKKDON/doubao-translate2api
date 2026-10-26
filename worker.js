@@ -572,7 +572,7 @@ function parseTranslationRequest(body, request, env) {
 async function handleRequest(request, env, requestId) {
   const url = new URL(request.url);
   if (request.method === "GET" && url.pathname === "/health") {
-    return z({ status: "ok", runtime: "cloudflare-workers-lite" });
+    return z({ status: "ok", runtime: "cloudflare-workers" });
   }
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204 });
@@ -613,7 +613,7 @@ async function handleRequest(request, env, requestId) {
 
   const body = x(await v(request, 64 * 1024));
   if (body.stream !== undefined && body.stream !== false) {
-    t("Disable stream in Lite mode.", "unsupported_feature");
+    t("Disable stream for this endpoint.", "unsupported_feature");
   }
   if (
     ["tools", "functions", "reasoning"].some(
@@ -708,7 +708,7 @@ const worker = {
     } catch (error) {
       const [message, code, status, headers] = Array.isArray(error)
         ? error
-        : ["Lite Worker failed.", "internal_error", 500];
+        : ["Worker failed.", "internal_error", 500];
       const statusCode = Number.isInteger(status) ? status : 500;
       const type =
         statusCode === 429

@@ -27,6 +27,10 @@
 - `wrangler.jsonc` 不再声明 `secrets.required`，改为 `keep_vars: true`：`API_KEY` 与 `DOUBAO_COOKIE` 由 Cloudflare 面板以明文变量维护，构建部署时保留面板变量，不再被删除。
 - 说明：面板上已是明文变量时，配置里若仍保留 `secrets.required`，构建会以 `The following required secrets have not been set` 失败；README 已补充明文变量与 Secret 两种维护方式的取舍。
 
+### 命名
+
+- 去掉 `lite` 品牌：`/health` 的 `runtime` 返回值改为 `cloudflare-workers`；`stream: true` 与内部错误兜底的提示文案不再包含 Lite 字样。
+
 ## v0.2.0
 
 ### 新增：请求内批次并发
