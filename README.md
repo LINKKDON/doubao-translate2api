@@ -4,7 +4,7 @@
 
 **把豆包网页版的翻译能力封装成一个 Cloudflare Worker，喂给任何支持自定义 OpenAI Provider 的翻译插件。**
 
-非流式 · 纯文本 · 单文件 · 无状态 · MIT
+OpenAI 兼容 · 纯文本 · 单文件 · 无状态 · MIT
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/LINKKDON/doubao-translate2api)
 
@@ -23,12 +23,12 @@
 > [!WARNING]
 > **非官方项目**，与豆包、字节跳动没有隶属或合作关系。请只使用本人账号或已获授权的 Cookie；账号风控、Cookie 泄露、上游接口变更等风险自负。
 >
-> **它不是通用 LLM 网关**。上游只接收「正文 + 目标语言」，自定义提示词、术语表、多轮对话、工具调用、流式输出一律不生效。
+> **它不是通用 LLM 网关**。上游只接收「正文 + 目标语言」，自定义提示词、术语表、多轮对话、工具调用一律不生效；`stream: true` 只提供协议兼容的假流式，不是真正的增量输出。
 
 | 适合 ✅ | 不适合 ❌ |
 | --- | --- |
 | 沉浸式翻译、陪读蛙等支持 OpenAI 兼容接口的插件 | 需要提示词控制、术语表或自定义风格 |
-| 网页整页翻译、视频字幕批量翻译 | 多轮对话、function calling、流式返回 |
+| 网页整页翻译、视频字幕批量翻译、划词翻译 | 多轮对话、function calling、真正的逐字流式 |
 
 **目录**　[快速开始](#quickstart) · [配置](#config) · [客户端接入](#client) · [字幕与上下文](#modes) · [接口参考](#api) · [限制与超时](#limits) · [错误与重试](#errors) · [安全与隐私](#security) · [本地开发](#local) · [排错速查](#troubleshoot) · [许可](#license)
 
@@ -90,7 +90,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | API 地址 / Base URL | `https://<你的 Worker 域名>/v1/chat/completions` |
 | API Key | 与 Worker 的 `API_KEY` 相同 |
 | 模型 | `doubao-ai` |
-| 流式输出 | 关闭 |
+| 流式输出 | 开启或关闭均可（`true` 为聚合后一次性返回的兼容流） |
 | 模板 | 纯文本：`Translate to {{to}}:\n\n{{text}}` |
 
 ### 4 · 自测
@@ -260,7 +260,7 @@ Translate to Chinese:
 | --- | --- | --- |
 | `messages` | 是 | 消息数组；最后一条 `user` 消息的 `content` 必须是字符串 |
 | `model` | 否 | 省略或填 `doubao-ai`；其他值返回 `404 model_not_found` |
-| `stream` | 否 | 省略或 `false`；`true` 返回 `400 unsupported_feature` |
+| `stream` | 否 | 省略或 `false` 返回 JSON；`true` 返回 OpenAI SSE（内部仍等完整译文，非真正增量） |
 | `target_lang` | 否 | 目标语言，优先级最高 |
 | `tools` / `functions` / `reasoning` | 否 | 出现即 `400 unsupported_feature` |
 
@@ -305,7 +305,7 @@ Hello world
 }
 ```
 
-`system` / `developer` 消息只用于猜目标语言，以下能力一律不生效：自定义风格或提示词、术语表、多轮对话、工具与函数调用、推理参数、流式输出。
+`system` / `developer` 消息只用于猜目标语言，以下能力一律不生效：自定义风格或提示词、术语表、多轮对话、工具与函数调用、推理参数。`stream: true` 只是协议兼容层，不会把上游变成真正的增量流。
 
 如果客户端把 `{{input}}` 同时放进 system 和 user 消息，请求体会翻倍，更容易撞上 64 KiB 上限——请用纯文本模板，别重复发送正文。
 
@@ -345,7 +345,7 @@ Hello world
 | `400` | `invalid_request` | JSON、参数或上下文模式不合法 |
 | `400` | `unsupported_input` | 用了 HTML / YAML 等不支持的模板 |
 | `400` | `empty_translation_input` | 剥掉指令后没有正文 |
-| `400` | `unsupported_feature` | 请求了流式、工具、推理等不支持的能力 |
+| `400` | `unsupported_feature` | 请求了工具、推理等不支持的能力 |
 | `400` | `unsupported_target_language` | 目标语言无法识别 |
 | `401` | `unauthorized` | API Key 缺失或错误 |
 | `404` | `model_not_found` / `not_found` | 模型不是 `doubao-ai`，或路径错误 |
@@ -373,6 +373,20 @@ Hello world
 | 上游 SSE 缺少 `[DONE]` | 索引齐全且有译文即成功；缺索引返回 `502 upstream_incomplete_result` |
 
 `Retry-After` 只透传纯秒数或标准 HTTP-date，其他任意字符串不会被转发。
+
+### 流式兼容层
+
+`stream: true` 时返回标准 OpenAI `chat.completion.chunk` 事件，顺序固定为：
+
+```text
+data: {"object":"chat.completion.chunk","choices":[{"delta":{"role":"assistant","content":"..."}}]}
+
+data: {"object":"chat.completion.chunk","choices":[{"delta":{},"finish_reason":"stop"}]}
+
+data: [DONE]
+```
+
+带 `stream_options: { "include_usage": true }` 时会额外追加一条 `choices: []` 的零 token 用量事件。译文在发送第一个事件前已经完整生成，因此首字延迟与普通请求相同；这样做的目的只是让只支持流式协议的客户端（例如陪读蛙的划词翻译）能够正常调用。
 
 ---
 

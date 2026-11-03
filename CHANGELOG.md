@@ -4,6 +4,11 @@
 
 ## v0.2.1
 
+### 流式兼容层
+
+- 接受 `stream: true`：内部仍等待豆包返回完整译文，再输出标准 OpenAI `chat.completion.chunk` 事件并以 `data: [DONE]` 结束，解决陪读蛙划词翻译等只走流式协议的客户端报 `Disable stream for this endpoint.`。
+- 支持 `stream_options.include_usage`，追加一条零 token 的用量事件；非布尔 `stream` 返回 `400 invalid_request`。
+
 ### 字幕模式
 
 - `subtitle` 不再把单条字幕内部的多行拆分或归一化：只把独立一行的 `%%` 当作字幕边界，普通空行、连续空行、CRLF 和正文首尾空白都原样保留并回填。

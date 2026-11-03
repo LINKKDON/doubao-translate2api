@@ -599,6 +599,74 @@ try {
   AbortSignal.timeout = originalTimeout;
 }
 
+globalThis.fetch = async (_url, init) => {
+  calls += 1;
+  const body = JSON.parse(init.body);
+  return upstream(
+    body.raw_text.map((_, index) => ({ index, res: `stream${index}` })),
+  );
+};
+result = await call("Translate to Chinese:\nhello", {
+  body: JSON.stringify({
+    model: "doubao-ai",
+    stream: true,
+    messages: [{ role: "user", content: "Translate to Chinese:\nhello" }],
+  }),
+});
+const streamEvents = result.text
+  .split("\n\n")
+  .filter((event) => event.startsWith("data: ") && event !== "data: [DONE]")
+  .map((event) => JSON.parse(event.slice(6)));
+check(
+  "stream true returns an OpenAI-compatible SSE completion",
+  result.status === 200 &&
+    result.headers.get("content-type")?.startsWith("text/event-stream") &&
+    streamEvents[0]?.object === "chat.completion.chunk" &&
+    streamEvents[0]?.choices?.[0]?.delta?.content === "stream0" &&
+    streamEvents[1]?.choices?.[0]?.finish_reason === "stop" &&
+    result.text.endsWith("data: [DONE]\n\n"),
+  JSON.stringify({
+    status: result.status,
+    contentType: result.headers.get("content-type"),
+    text: result.text,
+  }),
+);
+
+result = await call("Translate to Chinese:\nhello", {
+  body: JSON.stringify({
+    model: "doubao-ai",
+    stream: true,
+    stream_options: { include_usage: true },
+    messages: [{ role: "user", content: "Translate to Chinese:\nhello" }],
+  }),
+});
+const usageEvents = result.text
+  .split("\n\n")
+  .filter((event) => event.startsWith("data: ") && event !== "data: [DONE]")
+  .map((event) => JSON.parse(event.slice(6)));
+check(
+  "stream include_usage appends a zero-token usage chunk",
+  result.status === 200 &&
+    usageEvents.length === 3 &&
+    usageEvents[2]?.choices?.length === 0 &&
+    usageEvents[2]?.usage?.total_tokens === 0,
+  JSON.stringify({ status: result.status, text: result.text }),
+);
+
+result = await call("Translate to Chinese:\nhello", {
+  body: JSON.stringify({
+    model: "doubao-ai",
+    stream: "false",
+    messages: [{ role: "user", content: "Translate to Chinese:\nhello" }],
+  }),
+});
+check(
+  "non-boolean stream is rejected",
+  result.status === 400 &&
+    result.json?.error?.code === "invalid_request",
+  JSON.stringify({ status: result.status, body: result.json }),
+);
+
 globalThis.fetch = originalFetch;
 await new Promise((resolve) => setTimeout(resolve, 20));
 check(

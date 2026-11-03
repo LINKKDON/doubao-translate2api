@@ -569,6 +569,44 @@ function parseTranslationRequest(body, request, env) {
   return { target, segments, batches, contextMode };
 }
 
+function streamCompletion(requestId, content, includeUsage) {
+  const id = `chatcmpl_${requestId.replaceAll("-", "")}`;
+  const created = Math.floor(Date.now() / 1000);
+  const chunk = (choices) =>
+    `data: ${JSON.stringify({
+      id,
+      object: "chat.completion.chunk",
+      created,
+      model: "doubao-ai",
+      choices,
+    })}\n\n`;
+  let body = chunk([
+    {
+      index: 0,
+      delta: { role: "assistant", content },
+      finish_reason: null,
+    },
+  ]);
+  body += chunk([{ index: 0, delta: {}, finish_reason: "stop" }]);
+  if (includeUsage) {
+    body += `data: ${JSON.stringify({
+      id,
+      object: "chat.completion.chunk",
+      created,
+      model: "doubao-ai",
+      choices: [],
+      usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+    })}\n\n`;
+  }
+  body += "data: [DONE]\n\n";
+  return new Response(body, {
+    headers: {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-store",
+    },
+  });
+}
+
 async function handleRequest(request, env, requestId) {
   const url = new URL(request.url);
   if (request.method === "GET" && url.pathname === "/health") {
@@ -612,8 +650,8 @@ async function handleRequest(request, env, requestId) {
   }
 
   const body = x(await v(request, 64 * 1024));
-  if (body.stream !== undefined && body.stream !== false) {
-    t("Disable stream for this endpoint.", "unsupported_feature");
+  if (body.stream !== undefined && typeof body.stream !== "boolean") {
+    t("stream must be a boolean.", "invalid_request");
   }
   if (
     ["tools", "functions", "reasoning"].some(
@@ -682,6 +720,14 @@ async function handleRequest(request, env, requestId) {
         (segment.text ? results[resultIndex++] : "") + segment.separator,
     )
     .join("");
+
+  if (body.stream === true) {
+    return streamCompletion(
+      requestId,
+      content,
+      body.stream_options?.include_usage === true,
+    );
+  }
 
   return z({
     id: `chatcmpl_${requestId.replaceAll("-", "")}`,
