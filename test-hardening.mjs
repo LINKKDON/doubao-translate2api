@@ -418,10 +418,10 @@ result = await call(
   { headers: { "x-doubao-context-mode": "subtitle-context" } },
 );
 check(
-  "subtitle-context mode sends one context group and preserves separators",
+  "subtitle-context mode splits cues like subtitle mode",
   result.status === 200 &&
     JSON.stringify(capturedRawText) ===
-      JSON.stringify(["first cue\nline two\n\n%%\n\nsecond cue"]),
+      JSON.stringify(["first cue\nline two", "second cue"]),
   JSON.stringify({ status: result.status, rawText: capturedRawText }),
 );
 
@@ -447,7 +447,7 @@ result = await call(
   { headers: { "x-doubao-context-mode": "subtitle-context" } },
 );
 check(
-  "subtitle-context mode rejects a context group over 10,000 characters before upstream",
+  "subtitle-context mode rejects a cue over 10,000 characters before upstream",
   result.status === 413 &&
     result.json?.error?.code === "request_too_large" &&
     calls === 0,
@@ -513,16 +513,111 @@ check(
   JSON.stringify({ status: result.status, body: result.json }),
 );
 
+// Translations that do NOT echo %%; alignment must come from the index, not the text.
 globalThis.fetch = async () =>
-  upstream([{ index: 0, res: "first\n\nsecond" }]);
+  upstream([
+    { index: 0, res: "第一" },
+    { index: 1, res: "第二" },
+  ]);
 result = await call("Translate to Chinese:\nfirst\n\n%%\n\nsecond", {
   headers: { "x-doubao-context-mode": "subtitle-context" },
 });
 check(
-  "subtitle-context rejects a missing upstream separator",
-  result.status === 502 &&
-    result.json?.error?.code === "upstream_stream_error",
+  "subtitle-context aligns by index instead of requiring %% in the translation",
+  result.status === 200 &&
+    result.json?.choices?.[0]?.message?.content === "第一\n\n%%\n\n第二",
   JSON.stringify({ status: result.status, body: result.json }),
+);
+
+// --- subtitle-context parity with subtitle (regression for the 5-cue 502) ---
+
+const fiveCues = [
+  "Good morning, everyone.",
+  "Today we are going to talk about\nthe ocean.",
+  "It covers most of our planet.",
+  "But we have explored\nvery little of it.",
+  "That is what makes it fascinating.",
+];
+const fiveCueBody = `Translate to Chinese:\n\n\n${fiveCues.join("\n\n%%\n\n")}`;
+
+for (const mode of ["subtitle", "subtitle-context"]) {
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(init.body);
+    capturedRawText = body.raw_text;
+    // Upstream returns translations with no %% at all, like the real endpoint.
+    return upstream(
+      body.raw_text.map((text, index) => ({ index, res: `译${index}：${text}` })),
+    );
+  };
+  result = await call(fiveCueBody, {
+    headers: { "x-doubao-context-mode": mode },
+  });
+  const out = result.json?.choices?.[0]?.message?.content ?? "";
+  const parts = out.split("\n\n%%\n\n");
+  check(
+    `${mode} keeps a 5-cue batch index-aligned when upstream omits %%`,
+    result.status === 200 &&
+      capturedRawText.length === 5 &&
+      parts.length === 5 &&
+      // The instruction separator's leftover newlines stay on cue 0 by design.
+      parts[0].endsWith("译0：\n\nGood morning, everyone.") &&
+      parts[1] === "译1：Today we are going to talk about\nthe ocean." &&
+      parts[4] === "译4：That is what makes it fascinating.",
+    JSON.stringify({ status: result.status, rawText: capturedRawText, parts }),
+  );
+}
+
+// Cues that repeat identical text must not collapse into one another.
+globalThis.fetch = async (_url, init) => {
+  const body = JSON.parse(init.body);
+  return upstream(
+    body.raw_text.map((_text, index) => ({ index, res: `第${index + 1}条` })),
+  );
+};
+result = await call("Translate to Chinese:\nSame.\n\n%%\n\nSame.\n\n%%\n\nSame.", {
+  headers: { "x-doubao-context-mode": "subtitle-context" },
+});
+check(
+  "duplicate cues stay separate units",
+  result.status === 200 &&
+    result.json?.choices?.[0]?.message?.content === "第1条\n\n%%\n\n第2条\n\n%%\n\n第3条",
+  JSON.stringify({ status: result.status, body: result.json }),
+);
+
+// A cue made only of whitespace must not become an empty upstream slot.
+globalThis.fetch = async (_url, init) => {
+  const body = JSON.parse(init.body);
+  capturedRawText = body.raw_text;
+  return upstream(body.raw_text.map((_text, index) => ({ index, res: `译${index}` })));
+};
+result = await call("Translate to Chinese:\nfirst\n\n%%\n\n   \n\n%%\n\nthird", {
+  headers: { "x-doubao-context-mode": "subtitle-context" },
+});
+check(
+  "blank-only cue is folded into the separator, not sent upstream",
+  result.status === 200 &&
+    JSON.stringify(capturedRawText) === JSON.stringify(["first", "third"]),
+  JSON.stringify({ status: result.status, rawText: capturedRawText }),
+);
+
+// --- webpage translation regression: default mode must stay line-based ---
+
+globalThis.fetch = async (_url, init) => {
+  const body = JSON.parse(init.body);
+  capturedRawText = body.raw_text;
+  return upstream(body.raw_text.map((text, index) => ({ index, res: `中${index}` })));
+};
+result = await call(
+  "Translate to Chinese:\nFirst paragraph.\nSecond line.\n\nThird paragraph.",
+);
+check(
+  "webpage default mode still splits every non-empty line",
+  result.status === 200 &&
+    JSON.stringify(capturedRawText) ===
+      JSON.stringify(["First paragraph.", "Second line.", "Third paragraph."]) &&
+    result.json?.choices?.[0]?.message?.content ===
+      "中0\n中1\n\n中2",
+  JSON.stringify({ status: result.status, rawText: capturedRawText, body: result.json }),
 );
 
 globalThis.fetch = async () =>

@@ -12,8 +12,9 @@
 ### 字幕模式
 
 - `subtitle` 不再把单条字幕内部的多行拆分或归一化：只把独立一行的 `%%` 当作字幕边界，普通空行、连续空行、CRLF 和正文首尾空白都原样保留并回填。
-- 新增 `subtitle-context` 上下文模式：整个正文作为一个上游翻译单元发送，保留 `%%` 结构，用于改善相邻字幕的上下文连贯性。
-- `subtitle-context` 会校验上游返回的独立 `%%` 分隔符数量，数量不一致时返回 `502 upstream_stream_error`，避免字幕错位。
+- 新增 `subtitle-context` 上下文模式：与 `subtitle` 走同一条索引对齐路径，一次请求内整批字幕一起发给上游，模型因此能看到相邻字幕的上下文。
+- 修正 `subtitle-context`：不再把整组正文压成单个上游单元、也不再要求模型回显 `%%`。旧实现下 5 条字幕的批次实测 100% 返回 `502 upstream_stream_error`，导致客户端退回逐条翻译、上下文完全丢失。
+- `subtitle-context` 与 `subtitle` 现在都按上游返回的 `index` 回填，单条上限 10,000 字符，纯空白字幕条并入分隔符而不上传空元素。
 - `x-doubao-context-mode` 只接受 `default` / `subtitle` / `subtitle-context`，其他值返回 `400 invalid_request`。
 
 ### 稳定性与错误语义

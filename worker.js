@@ -111,18 +111,10 @@ function resolveContextMode(request) {
 }
 
 function splitTranslationUnits(text, { mode }) {
-  if (mode === "subtitle-context") {
-    if (text.length > 10000) {
-      t(
-        "A subtitle context group exceeds 10,000 characters.",
-        "request_too_large",
-        413,
-      );
-    }
-    return [{ text, separator: "" }];
-  }
-
-  if (mode === "subtitle") {
+  // subtitle-context is an alias of subtitle: the whole batch already travels
+  // upstream in one raw_text array, so the model sees every cue's context.
+  // Index alignment is structural and must not depend on the model echoing %%.
+  if (mode === "subtitle" || mode === "subtitle-context") {
     // Keep each cue verbatim. Only a standalone %% line is a boundary;
     // everything between boundaries, including blank lines, stays intact.
     const parts = text.split(
@@ -165,11 +157,6 @@ function splitTranslationUnits(text, { mode }) {
   }
 
   return segments;
-}
-
-function countSubtitleBoundaries(text) {
-  return (text.match(/(?:^|\r\n|\r|\n)[ \t]*%%[ \t]*(?=\r\n|\r|\n|$)/g) ?? [])
-    .length;
 }
 
 function resolveConcurrency(env) {
@@ -281,7 +268,6 @@ async function translateBatch(
   cookie,
   signal,
   scene,
-  contextMode,
   requestSignal,
 ) {
   let retried = false;
@@ -418,17 +404,6 @@ async function translateBatch(
         t(
           "Upstream translation is incomplete.",
           "upstream_incomplete_result",
-          502,
-        );
-      }
-      if (
-        contextMode === "subtitle-context" &&
-        countSubtitleBoundaries(translations.get(0) ?? "") !==
-          countSubtitleBoundaries(rawText[0])
-      ) {
-        t(
-          "Upstream did not preserve subtitle boundaries.",
-          "upstream_stream_error",
           502,
         );
       }
@@ -693,7 +668,6 @@ async function handleRequest(request, env, requestId) {
               AbortSignal.timeout(45000),
             ]),
             scene,
-            contextMode.mode,
             request.signal,
           ),
         ),
