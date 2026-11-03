@@ -509,7 +509,7 @@ result = await call(paddedContext, {
 check(
   "subtitle-context preserves leading and trailing whitespace",
   result.status === 200 &&
-    result.json.choices?.[0]?.message?.content === "\nfirst\n\n%%\n\nsecond\n\n",
+    result.json.choices?.[0]?.message?.content === "first\n\n%%\n\nsecond\n\n",
   JSON.stringify({ status: result.status, body: result.json }),
 );
 
@@ -559,8 +559,8 @@ for (const mode of ["subtitle", "subtitle-context"]) {
     result.status === 200 &&
       capturedRawText.length === 5 &&
       parts.length === 5 &&
-      // The instruction separator's leftover newlines stay on cue 0 by design.
-      parts[0].endsWith("译0：\n\nGood morning, everyone.") &&
+      // Directive separator newlines are stripped, so cue 0 starts clean.
+      parts[0] === "译0：Good morning, everyone." &&
       parts[1] === "译1：Today we are going to talk about\nthe ocean." &&
       parts[4] === "译4：That is what makes it fascinating.",
     JSON.stringify({ status: result.status, rawText: capturedRawText, parts }),

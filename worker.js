@@ -59,7 +59,10 @@ function stripInstruction(content, mode) {
     content
       .slice(prefix.length)
       .replace(
-        mode === "default" ? /^(?:\r\n|\r|\n)+/ : /^(?:\r\n|\r|\n)/,
+        // Clients (Read Frog included) put 1..n blank lines between the
+        // directive and the payload. Strip them all in every mode, otherwise
+        // subtitle mode leaks leading blank lines into the first cue.
+        /^(?:\r\n|\r|\n)+/,
         "",
       );
   const colonMatch =
